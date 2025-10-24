@@ -1,0 +1,92 @@
+[
+    {
+        "page": 2,
+        "questao": "QUESTÃO 01",
+        "enunciado": "A relação entre as citações atribuídas ao físico Albert Einstein e ao cantor e compositor Bob Marley reside na crença de que é necessário",
+        "fontes": [
+            "[thumbpress.com. Acesso em: 28 out. 2013.](http://thumbpress.com)"
+        ],
+        "alternativas": {
+            "A": "dar oportunidade a pessoas que parecem necessitadas.",
+            "B": "identificar contextos que podem representar perigo.",
+            "C": "tirar proveito de situações que podem ser adversas.",
+            "D": "evitar dificuldades que parecem ser intransponíveis.",
+            "E": "contestar circunstâncias que parecem ser harmônicas."
+        }
+    },
+    {
+        "page": 2,
+        "questao": "QUESTÃO 02",
+        "enunciado": "Nessa letra de canção, que aborda um contexto de ódio e intolerância, o marcador “instead of ” introduz a ideia de",
+        "fontes": [
+            "KEYS, A. Here. Estados Unidos: RCA Records, 2016."
+        ],
+        "alternativas": {
+            "A": "mudança de comportamento.",
+            "B": "panorama de conflitos.",
+            "C": "rotina de isolamento.",
+            "D": "perspectiva bélica.",
+            "E": "cenário religioso."
+        }
+    },
+    {
+        "page": 2,
+        "questao": "QUESTÃO 03",
+        "enunciado": "O texto estabelece uma relação entre elementos da natureza e comandos de um programa de computador para",
+        "fontes": [
+            "[www.hongkiat.com. Acesso em: 18 ago. 2017 (adaptado).](http://www.hongkiat.com)"
+        ],
+        "alternativas": {
+            "A": "alertar as pessoas sobre a rápida destruição da natureza.",
+            "B": "conscientizar os indivíduos sobre a passagem acelerada do tempo.",
+            "C": "apresentar aos leitores os avanços tecnológicos na área da agricultura.",
+            "D": "orientar os usuários sobre o emprego sustentável das novas tecnologias.",
+            "E": "informar os interessados sobre o tempo de crescimento de novas árvores."
+        }
+    },
+    {
+        "page": 3,
+        "questao": "QUESTÃO 04",
+        "enunciado": "O problema abordado nesse texto sobre imigrantes residentes nos Estados Unidos diz respeito aos prejuízos gerados pelo(a)",
+        "fontes": [
+            "ANZALDÚA, G. Borderlands/La Frontera: The New Mestiza. San Francisco: Aunt Lute Books, 1987."
+        ],
+        "alternativas": {
+            "A": "repúdio ao sotaque espanhol no uso do inglês.",
+            "B": "resignação diante do apagamento da língua materna.",
+            "C": "escassez de oportunidades de aprendizado do espanhol.",
+            "D": "choque entre falantes de línguas distintas de diferentes gerações.",
+            "E": "concorrência entre as variações linguísticas do inglês e as do espanhol."
+        }
+    },
+    {
+        "page": 3,
+        "questao": "QUESTÃO 05",
+        "enunciado": "A carta da editora Stephanie Allen-Nichols à escritora Alice Walker tem o propósito de",
+        "fontes": [
+            "[www.clickhole.com. Acesso em: 26 out. 2015.](http://www.clickhole.com)"
+        ],
+        "alternativas": {
+            "A": "problematizar o enredo de sua obra.",
+            "B": "acusar o recebimento de seu manuscrito.",
+            "C": "solicitar a revisão ortográfica de seu texto.",
+            "D": "informar a transferência de seu livro a outra editora.",
+            "E": "comunicar a recusa da publicação de seu romance."
+        }
+    },
+    {
+        "page": 3,
+        "questao": "QUESTÃO 01 (opção espanhol)",
+        "enunciado": "Na argumentação apresentada sobre cultura do cancelamento, esse texto objetiva",
+        "fontes": [
+            "[www.revistaanfibia.com. Acesso em: 7 out. 2021 (adaptado).](http://www.revistaanfibia.com)"
+        ],
+        "alternativas": {
+            "A": "apresentar o conceito desse tipo de prática.",
+            "B": "mostrar a contrariedade das mídias com relação a essa atitude.",
+            "C": "criticar o impacto dessa cultura sobre a vida representada nas redes.",
+            "D": "evidenciar a democratização dessa prática na sociedade virtual.",
+            "E": "discorrer historicamente sobre a origem e as causas dessa cultura."
+        }
+    }
+]
