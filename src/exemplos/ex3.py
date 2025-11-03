@@ -24,6 +24,9 @@ llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
 template = """
 Extraia e retorne as seguintes informações do texto fornecido:
 - Questão e número da questão
+- Texto do enunciado, (algumas questões podem ter um texto antes do enunciado
+que deve ser incluído, caso nao tenha retorne apenas o enunciado e uma string
+vazia para esse campo)
 - Enunciado
 - Fontes, caso tenha (utilize a formatação [texto](link))
 - Alternativas (A, B, C, D, E)
@@ -31,6 +34,7 @@ Extraia e retorne as seguintes informações do texto fornecido:
 Retorne os dados no seguinte formato JSON:
 {{
     "questao": str,
+    "texto_do_enunciado": str,
     "enunciado": str,
     "fontes": [str],
     "alternativas": {{
@@ -43,6 +47,7 @@ Retorne os dados no seguinte formato JSON:
 }}
 {text}
 """
+# print(text)
 
 prompt = PromptTemplate(input_variables=["text"], template=template)
 

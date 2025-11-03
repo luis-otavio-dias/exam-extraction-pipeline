@@ -29,16 +29,18 @@ llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
 
 template = """
 Extraia e retorne as seguintes informações do texto fornecido:
-- Número da página
 - Questão e número da questão
+- Texto do enunciado, (algumas questões podem ter um texto antes do enunciado
+que deve ser incluído, caso nao tenha retorne apenas o enunciado e uma string
+vazia para esse campo)
 - Enunciado
 - Fontes, caso tenha (utilize a formatação [texto](link))
 - Alternativas (A, B, C, D, E)
 
 Retorne os dados no seguinte formato JSON:
 {{
-    "page": int,
     "questao": str,
+    "texto_do_enunciado": str,
     "enunciado": str,
     "fontes": [str],
     "alternativas": {{
@@ -64,6 +66,5 @@ with JSON_PATH.open("w", encoding="utf-8") as file:
 
 
 end = time.perf_counter()
-# print_json(data=response)
 
 print(f"\nTempo de execução: {end - start} segundos")
