@@ -6,6 +6,8 @@ pdf_path = Path(__file__).parent.parent.parent / "pdfs" / "exemplo.pdf"
 MEDIA_DIR = Path("media_images")
 MEDIA_DIR.mkdir(parents=True, exist_ok=True)
 
+
+
 with pdf_path.open("rb") as pdf:
     reader = PdfReader(pdf)
     for page_index in range(1, 3):
@@ -17,3 +19,4 @@ with pdf_path.open("rb") as pdf:
                 out_path = MEDIA_DIR / img_name
                 with out_path.open("wb") as fp:
                     fp.write(image_file_object.data)
+
