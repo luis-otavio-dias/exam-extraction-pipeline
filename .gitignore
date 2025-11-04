@@ -1,0 +1,17 @@
+.env
+.json
+
+.vscode/
+.egg-info
+media_images/
+
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
