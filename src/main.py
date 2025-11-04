@@ -1,7 +1,6 @@
 import json
 import time
 from pathlib import Path
-from tracemalloc import start
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.output_parsers import JsonOutputParser
@@ -27,7 +26,6 @@ def main() -> None:
             "Depois, extraia os dados estruturados conforme as instruções."
         ),
     ]
-
     result = graph.invoke({"messages": messages}, config=config)
 
     content = result["messages"][-1].content
