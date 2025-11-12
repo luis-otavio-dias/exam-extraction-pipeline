@@ -11,12 +11,6 @@ from state import State
 from tools import TOOLS, TOOLS_BY_NAME
 from utils import load_google_generative_ai_model
 
-# def call_llm(state: State) -> State:
-#     llm = load_google_generative_ai_model().bind_tools(TOOLS)
-#     result = llm.invoke(state["messages"])
-
-#     return {"messages": [result]}
-
 
 async def call_llm(state: State) -> State:
     llm = load_google_generative_ai_model().bind_tools(TOOLS)

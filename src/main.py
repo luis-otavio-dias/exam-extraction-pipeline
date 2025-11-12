@@ -52,10 +52,6 @@ async def main() -> None:
     ]
 
     result = await graph.ainvoke({"messages": messages}, config=config)
-    # -> dict[str, Any] | Any
-
-    # result = graph.astream({"messages": messages}, config=config)
-    # -> AsyncIterator[dict[str, Any] | Any]
 
     final_message = result["messages"][-1]
     if isinstance(final_message, AIMessage):
