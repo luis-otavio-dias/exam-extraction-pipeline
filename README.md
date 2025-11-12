@@ -21,16 +21,16 @@ Este projeto é um agente baseado em LangGraph projetado para extrair e estrutur
 
 ```
 .
-├── .env-example            # Exemplo de arquivo de variáveis de ambiente
+├── .env-example            
 ├── .gitignore
-├── .python-version         # Especifica a versão do Python (3.13)
-├── README.md               # Este arquivo
+├── .python-version         
+├── README.md               
 ├── pdfs/
 │   ├── gabarito.pdf        # PDF do gabarito de exemplo
 │   └── prova.pdf           # PDF da prova de exemplo
 ├── pyproject.toml          # Definições do projeto e dependências
 ├── src/
-│   ├── graph.py            # Definição do StateGraph (LangGraph)
+│   ├── graph.py            # Definição do StateGraph
 │   ├── main.py             # Ponto de entrada principal da aplicação
 │   ├── prompts.py          # Prompts do sistema e do usuário
 │   ├── state.py            # Definição do estado do grafo
