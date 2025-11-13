@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from langchain_core.caches import InMemoryCache
+from langchain_core.exceptions import OutputParserException
 from langchain_core.globals import set_llm_cache
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.output_parsers import JsonOutputParser
@@ -66,7 +67,7 @@ async def main() -> None:
             with json_path.open("w", encoding="utf-8") as file:
                 json.dump(parsed, file, indent=4, ensure_ascii=False)
 
-        except ValidationError as e:
+        except (ValidationError, OutputParserException) as e:
             print(f"Errro ao parsear a resposta JSON: {e}")
             print(f"Conteúdo bruto da resposta: {content}")
 
@@ -84,3 +85,5 @@ if __name__ == "__main__":
     # first time execution (before async functions and cache):  ~1165 seconds
     # subsequent executions (with cache): ~1054 seconds
     # after optimizations in tool 'structure_questions': ~ 525 seconds
+    # after switching to gemini-2.5-flash-lite and
+    # tweaks in 'structure_questions': ~ 342 seconds

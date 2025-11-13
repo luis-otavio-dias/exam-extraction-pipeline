@@ -160,17 +160,21 @@ async def structure_questions(extracted_text_path: str) -> str:
         Path(extracted_text_path).read_text, encoding="utf-8"
     )
 
+    parts = extracted_text.split("\n\n--- Gabarito ---\n\n", 1)
+    exam_text = parts[0]
+    answer_key_text = parts[1] if parts[1] else "No answer key found."
+
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=20000,
         chunk_overlap=500,
     )
 
-    text_chunks = text_splitter.split_text(extracted_text)
+    text_chunks = text_splitter.split_text(exam_text)
 
     all_results = []
 
     llm = load_google_generative_ai_model(
-        model_name="gemini-2.5-flash", temperature=0
+        model_name="gemini-2.5-flash-lite", temperature=0
     )
 
     for chunk in text_chunks:
@@ -191,13 +195,16 @@ async def structure_questions(extracted_text_path: str) -> str:
         "passage_text": "Text of the associated passage/text/poem. Include source if present in passage but put citation in 'sources'. Empty string if none.",
         "sources": ["List of source strings (URLs, Books, access dates)"],
         "statement": "The question statement itself",
-        "options": {{ "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." }},
+        "options": {{ "A": "...", "B": "...", "C": "...", "D": "...", "E": "..."}},
         "correct_option": "Letter only (A, B, C, D, or E)"
     }}
 
 
     Exam Text Fragment:
     {chunk}
+
+    Answer Key:
+    {answer_key_text}
     """
 
         chunked_response = await llm.ainvoke(prompt)
