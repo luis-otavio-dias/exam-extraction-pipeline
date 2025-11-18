@@ -1,6 +1,7 @@
 import asyncio
 import json
 from pathlib import Path
+from typing import Any
 
 import fitz
 from langchain.tools import BaseTool, tool
@@ -55,7 +56,7 @@ def _pdf_extract_text_impl(
 
 
 @tool
-def pdf_extract_jpegs(
+async def pdf_extract_jpegs(
     pdf_path: Path,
     output_dir: Path = Path("output_images"),
     start_page: int | None = None,
@@ -77,29 +78,37 @@ def pdf_extract_jpegs(
     """
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    with pdf_path.open("rb") as pdf:
-        reader = PdfReader(pdf)
-        total_pages = len(reader.pages)
+    def _extract() -> int:
+        with pdf_path.open("rb") as pdf:
+            reader = PdfReader(pdf)
+            total_pages = len(reader.pages)
 
-        start: int = 0 if start_page is None or start_page < 0 else start_page
+            start: int = (
+                0 if start_page is None or start_page < 0 else start_page
+            )
 
-        end: int = (
-            total_pages
-            if end_page is None or end_page > total_pages
-            else end_page
-        )
+            end: int = (
+                total_pages
+                if end_page is None or end_page > total_pages
+                else end_page
+            )
 
-        saved = 0
-        for page_index in range(start, end):
-            page = reader.pages[page_index]
-            for image_file_object in page.images:
-                if image_file_object.name.find(".png") == -1:
-                    img_name = f"page_{page_index+1}_{image_file_object.name}"
+            saved = 0
+            for page_index in range(start, end):
+                page = reader.pages[page_index]
+                for image_file_object in page.images:
+                    if image_file_object.name.find(".png") == -1:
+                        img_name = (
+                            f"page_{page_index+1}_{image_file_object.name}"
+                        )
 
-                    out_path = output_dir / img_name
-                    with out_path.open("wb") as fp:
-                        fp.write(image_file_object.data)
-                    saved += 1
+                        out_path = output_dir / img_name
+                        with out_path.open("wb") as fp:
+                            fp.write(image_file_object.data)
+                        saved += 1
+            return saved
+
+    saved = await asyncio.to_thread(_extract)
 
     if saved == 0:
         return "No JPEG images found in the specified page range."
@@ -175,22 +184,29 @@ async def structure_questions(extracted_text_path: str) -> str:
 
     text_chunks = text_splitter.split_text(exam_text)
 
-    all_results = []
-
     llm = load_google_generative_ai_model(
         model_name="gemini-2.5-flash-lite", temperature=0
     )
 
-    for chunk in text_chunks:
-
+    async def _process_chunk(
+        chunk: str,
+        answer_key_text: str = answer_key_text,
+    ) -> str | list[str | dict[Any, Any]]:
         prompt = STRUCTURE_QUESTION_PROMPT.format(
             chunk=chunk, answer_key_text=answer_key_text
         )
 
         chunked_response = await llm.ainvoke(prompt)
-        all_results.extend(chunked_response.content)
 
         await asyncio.sleep(1)
+
+        return chunked_response.content
+
+    results = await asyncio.gather(
+        *[_process_chunk(chunk) for chunk in text_chunks]
+    )
+
+    all_results = [item for sublist in results for item in sublist]
 
     return json.dumps(all_results, indent=2, ensure_ascii=False)
 
