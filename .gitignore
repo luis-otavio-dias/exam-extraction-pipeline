@@ -5,7 +5,7 @@
 
 .vscode/
 .egg-info
-media_images/
+*_images/
 
 # Python-generated files
 __pycache__/

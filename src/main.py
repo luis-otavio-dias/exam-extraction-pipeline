@@ -86,4 +86,4 @@ if __name__ == "__main__":
     # subsequent executions (with cache): ~1054 seconds
     # after optimizations in tool 'structure_questions': ~ 525 seconds
     # after switching to gemini-2.5-flash-lite and
-    # tweaks in 'structure_questions': ~ 342 seconds
+    # tweaks in 'structure_questions': ~ 342-480 seconds

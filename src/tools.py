@@ -2,10 +2,12 @@ import asyncio
 import json
 from pathlib import Path
 
+import fitz
 from langchain.tools import BaseTool, tool
 from langchain_text_splitters.character import RecursiveCharacterTextSplitter
 from pypdf import PdfReader
 
+from prompts import STRUCTURE_QUESTION_PROMPT
 from utils import load_google_generative_ai_model
 
 exam_pdf_path = Path(__file__).parent.parent / "pdfs" / "prova.pdf"
@@ -29,24 +31,25 @@ def _pdf_extract_text_impl(
         str: Extracted text from the PDF.
     """
     text = ""
-    pages_text = {}
 
-    with pdf_path.open("rb") as pdf:
-        reader = PdfReader(pdf)
-        total_pages = len(reader.pages)
+    with fitz.open(pdf_path) as pdf:
+        total_pages = pdf.page_count
 
-        if start_page is None or start_page < 0:
-            start_page = 0
-        if end_page is None or end_page > total_pages:
-            end_page = total_pages
-        if start_page >= end_page:
+        start: int = 0 if start_page is None or start_page < 0 else start_page
+
+        end: int = (
+            total_pages
+            if end_page is None or end_page > total_pages
+            else end_page
+        )
+
+        if start >= end:
             return ""
 
-        for page in reader.pages[start_page:end_page]:
-            page_no = reader.pages.index(page) + 1
-            page_text = page.extract_text()
-            pages_text[page_no] = page_text
-            text += f"\n\n --- Page {page_no} --- \n\n{page_text}"
+        for page_num in range(start, end):
+            page = pdf[page_num]
+            page_text = page.get_text()
+            text += f"\n\n --- Page {page_num + 1} --- \n\n{page_text}"
 
     return text
 
@@ -54,7 +57,7 @@ def _pdf_extract_text_impl(
 @tool
 def pdf_extract_jpegs(
     pdf_path: Path,
-    output_dir: Path = Path("media_images"),
+    output_dir: Path = Path("output_images"),
     start_page: int | None = None,
     end_page: int | None = None,
 ) -> str:
@@ -78,18 +81,19 @@ def pdf_extract_jpegs(
         reader = PdfReader(pdf)
         total_pages = len(reader.pages)
 
-        if start_page is None or start_page < 0:
-            start_page = 0
-        if end_page is None or end_page > total_pages:
-            end_page = total_pages
-        if start_page >= end_page:
-            return "Intervalo de páginas inválido."
+        start: int = 0 if start_page is None or start_page < 0 else start_page
+
+        end: int = (
+            total_pages
+            if end_page is None or end_page > total_pages
+            else end_page
+        )
 
         saved = 0
-        for page_index in range(start_page, end_page):
+        for page_index in range(start, end):
             page = reader.pages[page_index]
             for image_file_object in page.images:
-                if image_file_object.name.find(".jpg") != -1:
+                if image_file_object.name.find(".png") == -1:
                     img_name = f"page_{page_index+1}_{image_file_object.name}"
 
                     out_path = output_dir / img_name
@@ -130,7 +134,7 @@ def extract_exam_pdf_text(
 
     if answer_key_pdf_path.exists():
         answer_key_text = _pdf_extract_text_impl(pdf_path=answer_key_pdf_path)
-        exam_text += "\n\n--- Gabarito ---\n\n" + answer_key_text
+        exam_text += "\n\n--- Answer Key ---\n\n" + answer_key_text
 
     temp_dir = Path("temp")
     temp_dir.mkdir(exist_ok=True)
@@ -160,7 +164,7 @@ async def structure_questions(extracted_text_path: str) -> str:
         Path(extracted_text_path).read_text, encoding="utf-8"
     )
 
-    parts = extracted_text.split("\n\n--- Gabarito ---\n\n", 1)
+    parts = extracted_text.split("\n\n--- Answer Key ---\n\n", 1)
     exam_text = parts[0]
     answer_key_text = parts[1] if parts[1] else "No answer key found."
 
@@ -179,33 +183,9 @@ async def structure_questions(extracted_text_path: str) -> str:
 
     for chunk in text_chunks:
 
-        prompt = f"""
-    You are an expert data extractor. Your task is to extract exam questions from the text below and match them with the provided Answer Key.
-    
-    Rules:
-    1. Output MUST be a valid JSON Array. One object per question.
-    2. Use the provided Answer Key to fill the 'correct_option' field.
-    3. If a question is split or incomplete at the start/end of the text and cannot be fully understood, IGNORE IT.
-    4. Image extraction: If the question implies an image, set "image": true.
-    
-    Target JSON Structure:
-    {{
-        "question": "Question number (e.g., '01', '10')",
-        "image": boolean,
-        "passage_text": "Text of the associated passage/text/poem. Include source if present in passage but put citation in 'sources'. Empty string if none.",
-        "sources": ["List of source strings (URLs, Books, access dates)"],
-        "statement": "The question statement itself",
-        "options": {{ "A": "...", "B": "...", "C": "...", "D": "...", "E": "..."}},
-        "correct_option": "Letter only (A, B, C, D, or E)"
-    }}
-
-
-    Exam Text Fragment:
-    {chunk}
-
-    Answer Key:
-    {answer_key_text}
-    """
+        prompt = STRUCTURE_QUESTION_PROMPT.format(
+            chunk=chunk, answer_key_text=answer_key_text
+        )
 
         chunked_response = await llm.ainvoke(prompt)
         all_results.extend(chunked_response.content)
