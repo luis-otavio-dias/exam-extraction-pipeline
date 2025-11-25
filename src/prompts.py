@@ -43,20 +43,20 @@ You are an expert in extracting structured data from pre-structured text from
 
 
 HUMAN_PROMPT = """
-Extract the content from the PDF exam located at 'pdfs/prova.pdf' and from the
- answer key located at 'pdfs/gabarito.pdf', then return the structured data in
+Extract the content from the PDF exam located at 'data/prova.pdf' and from the
+ answer key located at 'data/gabarito.pdf', then return the structured data in
  JSON.
- Also, extract all JPEG images from PDF exam located at 'pdfs/prova.pdf' and
+ Also, extract all JPEG images from PDF exam located at 'data/prova.pdf' and
  save them in the 'output_images' directory.
 """
 
 
 HUMAN_PROMPT_2 = """
-Extract the content from the PDF exam located at 'pdfs/vestibular_ufu.pdf' and
- from the answer key located at 'pdfs/gabarito_ufu.pdf', then return the
- structured data in JSON.
+Extract the content from the PDF exam located at 'data/vestibular_exemplo.pdf'
+ and from the answer key located at 'pdfs/gabarito_exemplo.pdf', then return
+ the structured data in JSON.
  Also, extract all JPEG images from PDF exam located at
- 'pdfs/vestibular_ufu.pdf' and save them in the 'ufu_extracted_images'
+ 'pdfs/vestibular_exemplo.pdf' and save them in the 'extracted_images'
  directory.
 """
 

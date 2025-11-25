@@ -1,12 +1,14 @@
 .env
-*.json
 
 /temp/
 
 .vscode/
 .egg-info
 *_images/
-data/
+*.jpg
+*.pdf
+src/*.json
+
 
 # Python-generated files
 __pycache__/

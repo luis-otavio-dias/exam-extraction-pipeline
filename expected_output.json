@@ -1,0 +1,67 @@
+[
+  {
+    "question": "Qual é a capital da França?",
+    "image": false,
+    "passage_text": "A França é um país localizado na Europa Ocidental, conhecido por sua história, cultura e culinária. Paris é sua cidade mais populosa e centro político.",
+    "sources": [
+      "https://pt.wikipedia.org/wiki/Fran%C3%A7a",
+      "https://www.britannica.com/place/France"
+    ],
+    "statement": "Identifique a capital política e cultural mencionada no texto.",
+    "options": {
+      "A": "Londres",
+      "B": "Berlim",
+      "C": "Paris",
+      "D": "Madri",
+      "E": "Roma"
+    },
+    "correct_option": "C"
+  },
+  {
+    "question": "Analise o gráfico abaixo e determine a tendência de crescimento.",
+    "image": true,
+    "passage_text": "",
+    "sources": ["Relatório Anual de Economia 2023"],
+    "statement": "Com base na imagem fornecida, qual a projeção para 2025?",
+    "options": {
+      "A": "Crescimento de 10%",
+      "B": "Estagnação",
+      "C": "Queda de 5%",
+      "D": "Crescimento de 2%",
+      "E": "Dados insuficientes"
+    }
+  },
+  {
+    "question": "Qual é a capital da França?",
+    "image": false,
+    "passage_text": "A França é um país localizado na Europa Ocidental, conhecido por sua história, cultura e culinária. Paris é sua cidade mais populosa e centro político.",
+    "sources": [
+      "https://pt.wikipedia.org/wiki/Fran%C3%A7a",
+      "https://www.britannica.com/place/France"
+    ],
+    "statement": "Identifique a capital política e cultural mencionada no texto.",
+    "options": {
+      "A": "Londres",
+      "B": "Berlim",
+      "C": "Paris",
+      "D": "Madri",
+      "E": "Roma"
+    },
+    "correct_option": "C"
+  },
+  {
+    "question": "Analise o gráfico abaixo e determine a tendência de crescimento.",
+    "image": true,
+    "passage_text": "",
+    "sources": ["Relatório Anual de Economia 2023"],
+    "statement": "Com base na imagem fornecida, qual a projeção para 2025?",
+    "options": {
+      "A": "Crescimento de 10%",
+      "B": "Estagnação",
+      "C": "Queda de 5%",
+      "D": "Crescimento de 2%",
+      "E": "Dados insuficientes"
+    },
+    "correct_option": "A"
+  }
+]
