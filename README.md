@@ -90,7 +90,8 @@ Na raiz do projeto, você encontrará o arquivo [`expected_output.json`](expecte
 
 ## Como Usar
 
-O agente é pré-configurado para processar os arquivos `prova.pdf` e `gabarito.pdf` localizados na pasta `pdfs/`.
+O agente **precisa** receber os caminhos dos arquivos PDF para iniciar o processo de extração e estruturação dos dados, também é necessário indicar onde salvar as imagens extraídas.  
+Essas informações estão definidas nos `HUMAN_PROMPTS` localizados em `src/prompts.py` e devem ser ajustadas conforme necessário.
 
 Para executar o agente usando uv, basta rodar o `main.py` indicando seu arquivo `.env`:
 
