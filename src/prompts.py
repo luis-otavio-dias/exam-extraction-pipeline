@@ -51,6 +51,16 @@ Extract the content from the PDF exam located at 'pdfs/prova.pdf' and from the
 """
 
 
+HUMAN_PROMPT_2 = """
+Extract the content from the PDF exam located at 'pdfs/vestibular_ufu.pdf' and
+ from the answer key located at 'pdfs/gabarito_ufu.pdf', then return the
+ structured data in JSON.
+ Also, extract all JPEG images from PDF exam located at
+ 'pdfs/vestibular_ufu.pdf' and save them in the 'ufu_extracted_images'
+ directory.
+"""
+
+
 STRUCTURE_QUESTION_PROMPT = """
 Follow this structure exactly for each question:
 
@@ -104,8 +114,10 @@ Follow this structure exactly for each question:
     - Correct option (A, B, C, D, E).
 
 Output Instructions:
-- Return only a JSON array with one object per question (no code fences).
-- Follow this structure exactly:
+- Do NOT use markdown code fences (like ```json).
+- Do NOT include any additional text, explanations, or comments.
+- Do NOT add any introductory or concluding text.
+- Each question object must follow this exact format:
 {{
     "question": str,
     "image": bool,

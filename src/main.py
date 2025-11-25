@@ -14,12 +14,14 @@ from pydantic import ValidationError
 from rich import print
 
 from graph import build_graph
-from prompts import HUMAN_PROMPT, SYSTEM_PROMPT
+from prompts import HUMAN_PROMPT_2, SYSTEM_PROMPT
 
 
 def _content_to_text(content: str | list[str | dict[str, Any]]) -> str:
+    text = ""
+
     if isinstance(content, str):
-        return content
+        text = content
 
     if isinstance(content, list):
         parts: list[str] = []
@@ -38,8 +40,20 @@ def _content_to_text(content: str | list[str | dict[str, Any]]) -> str:
                     and item["content"].strip()
                 ):
                     parts.append(item["content"])
-        return "\n".join(parts)
-    return str(content)
+        text = "\n".join(parts)
+
+    else:
+        text = str(content)
+
+    text = text.strip()
+    if text.startswith("```json"):
+        text = text[7:]
+    elif text.startswith("```"):
+        text = text[3:]
+
+    text = text.removesuffix("```")
+
+    return text.strip()
 
 
 async def main() -> None:
@@ -49,7 +63,7 @@ async def main() -> None:
 
     messages = [
         SystemMessage(SYSTEM_PROMPT),
-        HumanMessage(HUMAN_PROMPT),
+        HumanMessage(HUMAN_PROMPT_2),
     ]
 
     result = await graph.ainvoke({"messages": messages}, config=config)
@@ -62,14 +76,15 @@ async def main() -> None:
 
             parsed = JsonOutputParser().invoke(raw_text)
 
-            json_path = Path(__file__).parent / "final_output.json"
+            # json_path = Path(__file__).parent / "final_output.json"
+            json_path = Path(__file__).parent / "ufu_extracted_output.json"
 
             with json_path.open("w", encoding="utf-8") as file:
                 json.dump(parsed, file, indent=4, ensure_ascii=False)
 
         except (ValidationError, OutputParserException) as e:
             print(f"Errro ao parsear a resposta JSON: {e}")
-            print(f"Conteúdo bruto da resposta: {content}")
+            print(f"Conteúdo bruto da resposta: {content[:100]}")
 
     else:
         print("content não foi parsable.")
