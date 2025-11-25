@@ -14,7 +14,7 @@ from pydantic import ValidationError
 from rich import print
 
 from graph import build_graph
-from prompts import HUMAN_PROMPT_2, SYSTEM_PROMPT
+from prompts import HUMAN_PROMPT, SYSTEM_PROMPT
 
 
 def _content_to_text(content: str | list[str | dict[str, Any]]) -> str:
@@ -63,7 +63,7 @@ async def main() -> None:
 
     messages = [
         SystemMessage(SYSTEM_PROMPT),
-        HumanMessage(HUMAN_PROMPT_2),
+        HumanMessage(HUMAN_PROMPT),
     ]
 
     result = await graph.ainvoke({"messages": messages}, config=config)
@@ -76,8 +76,7 @@ async def main() -> None:
 
             parsed = JsonOutputParser().invoke(raw_text)
 
-            # json_path = Path(__file__).parent / "final_output.json"
-            json_path = Path(__file__).parent / "ufu_extracted_output.json"
+            json_path = Path(__file__).parent / "final_output.json"
 
             with json_path.open("w", encoding="utf-8") as file:
                 json.dump(parsed, file, indent=4, ensure_ascii=False)
