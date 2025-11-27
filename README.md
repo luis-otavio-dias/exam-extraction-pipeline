@@ -10,6 +10,10 @@ Na raiz do projeto, você encontrará o arquivo [`expected_output.json`](expecte
 - **Estruturação de Dados**: Utiliza um modelo de linguagem (`langchain-google-genai`) para analisar o texto extraído e estruturar as questões de múltipla escolha em um formato JSON limpo.
 - **Orquestração com LangGraph**: Emprega um grafo para gerenciar o fluxo de trabalho, desde a entrada do usuário até a chamada das ferramentas e a resposta final.
 
+## Diagrama do Fluxo de Trabalho
+
+![Diagrama do Fluxo de Trabalho](img/flow_diagram.png)
+
 ## Tecnologias Utilizadas
 
 - **Langchain**: Para integração com o modelo de linguagem e gerenciamento de prompts.
@@ -115,6 +119,31 @@ O script executará o grafo de forma assíncrona. Ele irá:
 4.  Chamar a ferramenta `structure_questions` para converter o texto em JSON.
 5.  Salvar o JSON estruturado no arquivo `src/final_output.json`.
 
-Você pode monitorar o progresso pelas mensagens impressas no console, que indicam qual ferramenta está sendo invocada.
+## Exemplo de Saída
+
+Abaixo está um trecho do JSON gerado pelo agente, estruturando a questão, alternativas e imagens associadas:
+
+```json
+[
+  {
+    "question": "Qual é a capital da França?",
+    "image": false,
+    "passage_text": "A França é um país localizado na Europa Ocidental...",
+    "sources": [
+      "https://pt.wikipedia.org/wiki/Fran%C3%A7a"
+    ],
+    "statement": "Identifique a capital política e cultural mencionada no texto.",
+    "options": {
+      "A": "Londres",
+      "B": "Berlim",
+      "C": "Paris",
+      "D": "Madri",
+      "E": "Roma"
+    },
+    "correct_option": "C"
+  },
+  ...
+]
+```
 
 ---
