@@ -17,8 +17,16 @@ Na raiz do projeto, você encontrará o arquivo [`expected_output.json`](expecte
   - `langchain-core`
   - `langchain-google-genai`
 - **LangGraph**: Para orquestrar o fluxo de execução do agente.
-- **pypdf**: Para extração de imagens de PDFs.
-- **fitz (PyMuPDF)**: Para extração de texto de PDFs.
+- **pypdf**: Para extração eficiente de imagens JPEG de PDFs.
+- **fitz (PyMuPDF)**: Para extração de texto de PDFs e manipulação de imagens.
+
+### Por que duas bibliotecas de manipulação de PDF?
+
+O projeto utiliza duas bibliotecas complementares:
+
+- **PyMuPDF (fitz)**: Escolhida para extração de texto e imagens com maior controle e performance. Permite filtrar imagens por características (tamanho, proporção, cores), extraindo apenas conteúdo potencialmente relevante. Oferece velocidade superior na extração de texto e manipulação geral de imagens.
+
+- **pypdf**: Otimizada especificamente para extração em massa de imagens JPEG. Embora o fitz seja mais versátil, pypdf demonstrou melhor performance no cenário específico de extrair todas as imagens JPEG de um documento.
 
 ## Estrutura do Projeto
 
