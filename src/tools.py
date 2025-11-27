@@ -1,18 +1,88 @@
 import asyncio
 import json
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
 import fitz
+from fitz import Document
 from langchain.tools import BaseTool, tool
 from langchain_text_splitters.character import RecursiveCharacterTextSplitter
+from PIL import Image
 from pypdf import PdfReader
 
 from prompts import STRUCTURE_QUESTION_PROMPT
 from utils import load_google_generative_ai_model
 
-exam_pdf_path = Path(__file__).parent.parent / "pdfs" / "prova.pdf"
-answer_key_pdf_path = Path(__file__).parent.parent / "pdfs" / "gabarito.pdf"
+
+def _count_img_occurrences(doc: Document) -> dict[int, int]:
+    """
+    Count occurrences of each image in the PDF document.
+    Args:
+        doc (Document): The PDF document.
+    Returns:
+        dict[int, int]: A dictionary mapping image xref to its
+        occurrence count.
+    """
+    image_counts = {}
+
+    for page in doc.pages():
+        images = page.get_images(full=True)
+        for img in images:
+            xref = img[0]
+
+            image_counts[xref] = image_counts.get(xref, 0) + 1
+    return image_counts
+
+
+def _img_passes_filters(  # noqa: PLR0913
+    image: Image.Image,
+    image_bytes: bytes,
+    xref: int,
+    image_counts: dict[int, int],
+    min_width: int = 300,
+    min_height: int = 300,
+    min_size_bytes: int = 10240,
+    max_repetitions: int = 1,
+    min_unique_colors: int = 50,
+) -> bool:
+    """Check if an image passes the defined filters."""
+    if image_counts[xref] > max_repetitions:
+        return False
+
+    if len(image_bytes) < min_size_bytes:
+        return False
+
+    width, height = image.size
+    if width < min_width or height < min_height:
+        return False
+
+    aspcet_ratio = width / height
+    max_aspect_ratio = 4.0
+    min_aspect_ratio = 0.25
+    if aspcet_ratio > max_aspect_ratio or aspcet_ratio < min_aspect_ratio:
+        return False
+
+    image_rgb = image.convert("RGB")
+    colors = image_rgb.getcolors(maxcolors=10000)
+    if colors and len(colors) < min_unique_colors:
+        return False
+
+    return not (image.mode == "P" and "transparency" in image.info)
+
+
+def _save_image(
+    image_bytes: bytes,
+    page_num: int,
+    xref: int,
+    ext: str,
+    output_path: Path,
+) -> None:
+    """Save image in the specified output path."""
+    img_name = f"page_{page_num + 1}_img_{xref}.{ext}"
+    out_path = output_path / img_name
+    with out_path.open("wb") as f:
+        f.write(image_bytes)
 
 
 def _pdf_extract_text_impl(
@@ -107,6 +177,64 @@ async def pdf_extract_jpegs(
                             fp.write(image_file_object.data)
                         saved += 1
             return saved
+
+    saved = await asyncio.to_thread(_extract)
+
+    if saved == 0:
+        return "No JPEG images found in the specified page range."
+    return f"{saved} JPEG images saved in '{output_dir.resolve()}'"
+
+
+@tool
+async def extract_images_from_pdf(
+    pdf_path: Path,
+    output_dir: Path,
+) -> str:
+    """
+    Extracts images from a PDF file and saves them to a specified directory.
+
+    Args:
+        pdf_path (Path): Path to the PDF file.
+        output_dir (Path): Path to the output directory.
+
+    Returns:
+        str: Message indicating the number of images extracted and the output
+        directory.
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    def _extract() -> int:
+        doc = fitz.open(pdf_path)
+        image_counts = _count_img_occurrences(doc)
+        saved = 0
+
+        for i, page in enumerate(doc.pages()):
+            images = page.get_images(full=True)
+            for img in images:
+                xref = img[0]
+                base_image = doc.extract_image(xref)
+                image_bytes = base_image["image"]
+
+                try:
+                    image = Image.open(BytesIO(image_bytes))
+
+                    if _img_passes_filters(
+                        image,
+                        image_bytes,
+                        xref,
+                        image_counts,
+                    ):
+                        _save_image(
+                            image_bytes,
+                            i,
+                            xref,
+                            base_image["ext"],
+                            output_dir,
+                        )
+                    saved += 1
+                except Exception as e:
+                    print(f"Error processing the xref {xref}: {e}")
+        return saved
 
     saved = await asyncio.to_thread(_extract)
 
@@ -213,6 +341,7 @@ async def structure_questions(extracted_text_path: str) -> str:
 
 TOOLS: list[BaseTool] = [
     pdf_extract_jpegs,
+    extract_images_from_pdf,
     extract_exam_pdf_text,
     structure_questions,
 ]

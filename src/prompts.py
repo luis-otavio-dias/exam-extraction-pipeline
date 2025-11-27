@@ -8,7 +8,14 @@ You are an expert in extracting structured data from pre-structured text from
 
  Step 1) Extract Text: Use the tool 'extract_exam_pdf_text' to extract text
  from the provided exam PDF and from the answer key PDF. If the user also
- requests images, use the tool 'pdf_extract_jpegs'.
+ requests images, you have TWO tools at your disposal to extract images:
+    - 'extract_images_from_pdf': Extracts ALL potentially relevant images
+    from the PDF and saves them to a specified directory
+    (recommended for general use).
+
+    - 'pdf_extract_jpegs': This tool extracts ONLY JPEG images from the PDF
+    exam and saves them to a specified directory. Use this tool ONLY if the
+    user explicitly requests JPEG extraction.
 
  Step 2) Wait Results: You will receive the output from the tools.
  This will include a path to the extracted text file and, if requested, a list
@@ -17,7 +24,8 @@ You are an expert in extracting structured data from pre-structured text from
 
  Step 3) Structure Questions: You must now take action on the tool
  outputs.
-    - IGNORE the output from 'pdf_extract_jpegs' (the list of images).
+    - IGNORE the output from image extraction tools ('pdf_extract_jpegs' or
+      'extract_images_from_pdf').
     - TAKE the FULL path to the extracted text file (the output from
  'extract_exam_pdf_text') and use it as the
  input for the tool 'structure_questions'.
@@ -43,10 +51,10 @@ You are an expert in extracting structured data from pre-structured text from
 
 
 HUMAN_PROMPT = """
-Extract the content from the PDF exam located at 'data/prova.pdf' and from the
- answer key located at 'data/gabarito.pdf', then return the structured data in
- JSON.
- Also, extract all JPEG images from PDF exam located at 'data/prova.pdf' and
+Extract the content from the PDF exam located at 'data/prova.pdf' and from
+ the answer key located at 'data/gabarito.pdf', then return the structured
+ data in JSON.
+ Also, extract all images from PDF exam located at 'data/prova.pdf' and
  save them in the 'output_images' directory.
 """
 
