@@ -76,6 +76,18 @@ async def main() -> None:
 
             parsed = JsonOutputParser().invoke(raw_text)
 
+            # data = json.loads(parsed)
+
+            for question in parsed:
+                has_url = any(
+                    "http" in source for source in question.get("sources", [])
+                )
+                is_text_empty = not question.get("passage_text", "").strip()
+
+                # A lógica que o prompt estava falhando em fazer
+                if has_url and is_text_empty:
+                    question["image"] = True
+
             json_path = Path(__file__).parent / "final_output.json"
 
             with json_path.open("w", encoding="utf-8") as file:
@@ -101,3 +113,4 @@ if __name__ == "__main__":
     # after optimizations in tool 'structure_questions': ~ 525 seconds
     # after switching to gemini-2.5-flash-lite and
     # tweaks in 'structure_questions': ~ 300-500 seconds
+    # after further prompt optimizations: ~150-250 seconds

@@ -72,11 +72,24 @@ Extract the content from the PDF exam located at 'data/vestibular_exemplo.pdf'
 STRUCTURE_QUESTION_PROMPT = """
 Follow this structure exactly for each question:
 
-    - Question and question number.
+    - Question Identifier (question):
+        - Must ALWAYS follow the format:
+        "QUESTÃO XX" (e.g., "QUESTÃO 01", "QUESTÃO 12").
 
-    - Whether there is an image associated with the question (true/false).
+        - If the text only shows a number (like "1" or "01"),
+        you MUST prepend "QUESTÃO ".
 
-    - The passage text:
+        - Pad single digits with a zero (e.g., convert "1" to "01").
+
+    - Image Flag ("image"):
+      - Set to `true` if the input explicitly contains an image/graph.
+
+      - **IMPORTANT**: If a question has a URL in the sources AND the
+      `passage_text` is empty/missing, you MUST set `image` to `true`.
+
+      - Otherwise, set to `false`.
+
+    - The passage text ("passage_text"):
         - Some questions may have a passage before the statement that should
         be included.
 
@@ -92,30 +105,53 @@ Follow this structure exactly for each question:
         - The source of the passage should not be included in the passage text
         itself.
 
-    - Sources:
-        - A list of strings indicating the source of the passage text or the
-        source of an image.
+    - Sources ("sources"):
+        - **IMPORTANT**: Extract ONLY sources that appear DIRECTLY in this
+          question's context.
 
-        - Even if the source is for an image, the tool 'pdf_extract_jpegs'
-         must be called to extract and save the image files.
+        - **DO NOT** include sources from other questions.
+
+        - **STOP** extracting when you reach the next question number.
+
+        - Maximum of 5 sources per question.
+
+        - Each source should be a single, complete reference.
+
+        - A list of strings indicating the source of the passage text or the
+          source of an image.
 
         - If there is no source, return an empty list for this field.
 
-        - May be an URL or a book reference, article, textbook, etc.
+        - **Source Types and Extraction Rules:**
 
-        - If is an URL:
-            - Extract the link and store it as it is.
+            **For URLs:**
+            - **NEGATIVE CONSTRAINT**: **DO NOT** include the full raw sentence
+            (e.g., NEVER return "Disponível em: http...").
+            DISCARD the raw phrase; keep only the extracted URL and Date.
 
-            - Extract the access date. Identify by phrases like this stucture
-            "text: date".
+            - Always return as TWO separate strings in the array:
+                1. First string: The complete URL as it appears
+                2. Second string: ONLY the access date (format: "DD mmm. YYYY")
 
-            - Store only the content as it is. Without the preceding
-             phrase "text: "
+            - Extract the access date by identifying phrases with this
+            structure:
+              "Acesso em: [date]" or similar patterns
 
-        - If is a book reference, article, textbook, etc.:
-            - Extract and store is as it is.
+            - Store ONLY the date content, WITHOUT the preceding phrase
+              (e.g., store "13 out. 2023", not "Acesso em: 13 out. 2023")
 
-    - Statement.
+            - Example:
+              sources: ["https://example.com", "13 out. 2023"]
+
+            **For book references, articles, textbooks, etc.:**
+            - Return as a SINGLE string
+            - Extract and store the complete reference as it appears
+            - Maintain all formatting and punctuation
+            - Example:
+              sources: ["AUTHOR, A. Title. City: Publisher, Year."]
+
+    - Statement ("statement"):
+        - The main text of the question command.
 
     - Options (A, B, C, D, E), each with its full text.
 
