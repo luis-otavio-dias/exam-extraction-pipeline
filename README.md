@@ -121,7 +121,7 @@ O script executará o grafo de forma assíncrona. Ele irá:
 
 ## Exemplo de Saída
 
-Abaixo está um trecho do JSON gerado pelo agente, estruturando a questão, alternativas e imagens associadas:
+Abaixo está um trecho do JSON gerado pelo agente, estruturando a questão, alternativas e se existem imagens associadas:
 
 ```json
 [
