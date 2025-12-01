@@ -48,7 +48,7 @@ async def tool_node(state: State) -> State:
             ValidationError,
             ValueError,
         ) as error:
-            content = f"Erro ao chamar a ferramenta '{name}': {error!s}"
+            content = f"Error calling tool '{name}': {error!s}"
             status = "error"
 
         tool_messages.append(
