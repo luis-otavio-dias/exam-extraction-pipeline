@@ -75,16 +75,12 @@ async def main() -> None:
         try:
 
             parsed = JsonOutputParser().invoke(raw_text)
-
-            # data = json.loads(parsed)
-
             for question in parsed:
                 has_url = any(
                     "http" in source for source in question.get("sources", [])
                 )
                 is_text_empty = not question.get("passage_text", "").strip()
 
-                # A lógica que o prompt estava falhando em fazer
                 if has_url and is_text_empty:
                     question["image"] = True
 
@@ -94,8 +90,8 @@ async def main() -> None:
                 json.dump(parsed, file, indent=4, ensure_ascii=False)
 
         except (ValidationError, OutputParserException) as e:
-            print(f"Errro ao parsear a resposta JSON: {e}")
-            print(f"Conteúdo bruto da resposta: {content[:100]}")
+            print(f"Error while parsing JSON response: {e}")
+            print(f"Response content: {content[:100]}")
 
     else:
         print("content não foi parsable.")
@@ -111,6 +107,5 @@ if __name__ == "__main__":
     # first time execution (before async functions and cache):  ~1165 seconds
     # subsequent executions (with cache): ~1054 seconds
     # after optimizations in tool 'structure_questions': ~ 525 seconds
-    # after switching to gemini-2.5-flash-lite and
-    # tweaks in 'structure_questions': ~ 300-500 seconds
+    # after switching to gemini-2.5-flash-lite: ~ 300-500 seconds
     # after further prompt optimizations: ~150-250 seconds
