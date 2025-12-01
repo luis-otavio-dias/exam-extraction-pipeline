@@ -1,6 +1,6 @@
 # Agente de Extração de Dados de PDFs
 
-Este projeto é um agente baseado em LangGraph projetado para extrair e estruturar dados de documentos PDF. O foco principal é extrair eficientemente questões de múltipla escolha de cadernos de prova (como o ENEM e vestibulares) e seus respectivos gabaritos, salvando o resultado em um formato JSON estruturado. Além disso, o agente é capaz de extrair imagens contidas nos PDFs e salvá-las em formato JPEG.  
+Este projeto é um agente baseado em LangGraph projetado para extrair e estruturar dados de documentos PDF. O foco principal é extrair eficientemente questões de múltipla escolha de cadernos de prova (como o ENEM e vestibulares) e seus respectivos gabaritos, salvando o resultado em um formato JSON estruturado.  
 Na raiz do projeto, você encontrará o arquivo [`expected_output.json`](expected_output.json), que demonstra o formato esperado do JSON resultante após a extração e estruturação dos dados.
 
 ## Funcionalidades
