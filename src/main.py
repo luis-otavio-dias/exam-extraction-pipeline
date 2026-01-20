@@ -1,16 +1,11 @@
 import asyncio
-import json
 import time
-from pathlib import Path
 from typing import Any
 
 from langchain_core.caches import InMemoryCache
-from langchain_core.exceptions import OutputParserException
 from langchain_core.globals import set_llm_cache
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langchain_core.output_parsers import JsonOutputParser
 from langgraph.graph.state import RunnableConfig
-from pydantic import ValidationError
 from rich import print
 
 from graph import build_graph
@@ -70,31 +65,12 @@ async def main() -> None:
 
     final_message = result["messages"][-1]
     if isinstance(final_message, AIMessage):
-        content = final_message.content
-        raw_text: str = _content_to_text(content)
-        try:
-
-            parsed = JsonOutputParser().invoke(raw_text)
-            for question in parsed:
-                has_url = any(
-                    "http" in source for source in question.get("sources", [])
-                )
-                is_text_empty = not question.get("passage_text", "").strip()
-
-                if has_url and is_text_empty:
-                    question["image"] = True
-
-            json_path = Path(__file__).parent / "final_output.json"
-
-            with json_path.open("w", encoding="utf-8") as file:
-                json.dump(parsed, file, indent=4, ensure_ascii=False)
-
-        except (ValidationError, OutputParserException) as e:
-            print(f"Error while parsing JSON response: {e}")
-            print(f"Response content: {content[:100]}")
+        content_text = _content_to_text(final_message.content)
+        print(content_text)
+        print()
 
     else:
-        print("content não foi parsable.")
+        print("Final message is not from AI.")
         return
 
 
@@ -109,3 +85,4 @@ if __name__ == "__main__":
     # after optimizations in tool 'structure_questions': ~ 525 seconds
     # after switching to gemini-2.5-flash-lite: ~ 300-500 seconds
     # after further prompt optimizations: ~150-250 seconds
+    # after adding concurrency with semaphore limit 30: ~ 30-50 seconds
