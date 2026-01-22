@@ -16,8 +16,12 @@ from pypdf import PdfReader
 from prompts import STRUCTURE_QUESTION_PROMPT
 from utils import load_google_generative_ai_model
 
-RE_QUESTION_SPLIT = re.compile(r"(QUESTÃO\s+\d+)")
+QUESTION_SPLIT_PATTERN = r"(QUESTÃO\s+\d+)"
+RE_QUESTION_SPLIT = re.compile(QUESTION_SPLIT_PATTERN)
 RE_NORMALIZE_Q = re.compile(r"(\d+)")
+
+
+exam_pdf = Path().parent / "data" / "prova.pdf"
 
 
 def _count_img_occurrences(doc: Document) -> dict[int, int]:
@@ -194,58 +198,141 @@ async def pdf_extract_jpegs(
 async def extract_images_from_pdf(
     pdf_path: Path,
     output_dir: Path,
-) -> str:
+) -> str | dict[str, list[str]]:
     """
-    Extracts images from a PDF file and saves them to a specified directory.
+    Extracts images from a PDF file, maps them to questions based on their
+    position, and saves them to a specified directory.
 
     Args:
         pdf_path (Path): Path to the PDF file.
         output_dir (Path): Path to the output directory.
 
     Returns:
-        str: Message indicating the number of images extracted and the output
-        directory.
+        dict: mapping questions to their associated image paths.
+        str: Message indicating no images were found.
+        Example: '{"QUESTÃO 01": ["QUESTÃO 01_img3.jpeg"], "QUESTÃO 02": []}'
     """
+
+    def _extract() -> dict[str, list[str]]:
+        return map_images_to_questions(pdf_path, output_dir)
+
+    question_image_map = await asyncio.to_thread(_extract)
+
+    total_images = sum(len(images) for images in question_image_map.values())
+
+    if total_images == 0:
+        return json.dumps(
+            {"message": "No images found matching the criteria.", "data": {}}
+        )
+
+    return question_image_map
+
+    # return json.dumps(
+    #     {
+    #         "message": f"{total_images} images extracted and mapped to questions in '{output_dir.resolve()}'",
+    #         "data": question_image_map,
+    #     },
+    #     ensure_ascii=False,
+    # )
+
+
+def _save_image_impl(
+    image_bytes: bytes,
+    output_path: Path,
+    img_name: str,
+) -> None:
+    """Save image in the specified output path."""
+    out_path = output_path / img_name
+    with out_path.open("wb") as f:
+        f.write(image_bytes)
+
+
+def map_images_to_questions(  # noqa: PLR0912
+    pdf_path: Path, output_dir: Path
+) -> dict[str, list[str]]:
+    """
+    Extrai imagens e as mapeia para as questões baseando-se na posição Y
+    na página.
+    Retorna: {'QUESTÃO 01': ['caminho/img1.png'], 'QUESTÃO 02': []}
+    """
+    doc = fitz.open(pdf_path)
+    question_map = {}
+
+    re_header = re.compile(QUESTION_SPLIT_PATTERN, re.IGNORECASE)
+    # re_header = re.compile(r"(QUESTÃO\s+\d+)", re.IGNORECASE)
     output_dir.mkdir(parents=True, exist_ok=True)
+    image_counts = _count_img_occurrences(doc)
 
-    def _extract() -> int:
-        doc = fitz.open(pdf_path)
-        image_counts = _count_img_occurrences(doc)
-        saved = 0
+    for page in doc.pages():
+        text_blocks = page.get_text("dict")["blocks"]
+        questions = []
 
-        for i, page in enumerate(doc.pages()):
-            images = page.get_images(full=True)
-            for img in images:
-                xref = img[0]
-                base_image = doc.extract_image(xref)
-                image_bytes = base_image["image"]
+        for block in text_blocks:
+            if "lines" in block:
+                for line in block["lines"]:
+                    for span in line["spans"]:
+                        match = re_header.search(span["text"])
+                        if match:
+                            digit_mach = re.search(r"\d+", match.group(1))
+                            if digit_mach:
+                                q_num = int(digit_mach.group())
+                                q_name = f"QUESTÃO {q_num:02d}"
+                                questions.append((q_name, block["bbox"][1]))
+                                if q_name not in question_map:
+                                    question_map[q_name] = []
 
-                try:
-                    image = Image.open(BytesIO(image_bytes))
+        questions.sort(key=lambda x: x[1])
 
-                    if _img_passes_filters(
-                        image,
+        images = page.get_images(full=True)
+        for img in images:
+            xref = img[0]
+            img_rects = page.get_image_rects(xref)
+
+            if not img_rects:
+                continue
+
+            img_y = img_rects[0].y0
+
+            current_question = None
+
+            for i, (q_name, q_y) in enumerate(questions):
+                if i + 1 < len(questions):
+                    next_q_y = questions[i + 1][1]
+                else:
+                    next_q_y = float("inf")
+
+                if q_y <= img_y < next_q_y:
+                    current_question = q_name
+                    break
+
+            if not current_question:
+                continue
+
+            base_image = doc.extract_image(xref)
+            image_bytes = base_image["image"]
+
+            try:
+                image = Image.open(BytesIO(image_bytes))
+
+                if _img_passes_filters(image, image_bytes, xref, image_counts):
+                    img_filename = (
+                        f"{current_question}_img{xref}.{base_image['ext']}"
+                    )
+                    _save_image_impl(
                         image_bytes,
-                        xref,
-                        image_counts,
-                    ):
-                        _save_image(
-                            image_bytes,
-                            i,
-                            xref,
-                            base_image["ext"],
-                            output_dir,
-                        )
-                    saved += 1
-                except Exception as e:
-                    print(f"Error processing the xref {xref}: {e}")
-        return saved
+                        output_dir,
+                        img_filename,
+                    )
 
-    saved = await asyncio.to_thread(_extract)
+                    image_path = img_filename
+                    if image_path not in question_map[current_question]:
+                        question_map[current_question].append(image_path)
 
-    if saved == 0:
-        return "No JPEG images found in the specified page range."
-    return f"{saved} JPEG images saved in '{output_dir.resolve()}'"
+            except Exception as e:
+                print(f"Error processing xref {xref}: {e}")
+
+    doc.close()
+    return question_map
 
 
 @tool
@@ -377,6 +464,10 @@ async def structure_questions(extracted_text_path: str) -> str:
         else:
             final_data.append(res)
 
+    output_directory = Path("extracted_images")
+
+    question_image_map = map_images_to_questions(exam_pdf, output_directory)
+
     for question in final_data:
         has_url = any(
             "http" in str(source) for source in question.get("sources", [])
@@ -385,6 +476,14 @@ async def structure_questions(extracted_text_path: str) -> str:
 
         if has_url and is_text_empty:
             question["image"] = True
+
+        has_image = question.get("image", False)
+
+        if has_image:
+            for q_name, images in question_image_map.items():
+                if q_name in question.get("question", ""):
+                    question["images"] = images
+                    break
 
     output_path = Path("src/final_output.json")
 

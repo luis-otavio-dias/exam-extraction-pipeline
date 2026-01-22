@@ -168,6 +168,7 @@ Output Instructions:
 {{
     "question": str,
     "image": bool,
+    "images": [str],
     "passage_text": str,
     "sources": [str],
     "statement": str,
