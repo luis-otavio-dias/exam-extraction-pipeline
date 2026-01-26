@@ -1,17 +1,14 @@
-from langchain_google_genai import ChatGoogleGenerativeAI
+"""Backward compatibility shim for utils module.
 
+This module maintains backward compatibility by re-exporting
+utilities from the new utils package structure.
+"""
 
-def load_google_generative_ai_model(
-    model_name: str = "gemini-2.5-pro", temperature: float = 0
-) -> ChatGoogleGenerativeAI:
-    """
-    Initializes and returns a ChatGoogleGenerativeAI language model.
+from utils.file_operations import async_read_text, async_write_json
+from utils.llm import load_google_generative_ai_model
 
-    Args:
-        model_name (str): Name of the model to be used.
-        temperature (float): Temperature setting for the model.
-
-    Returns:
-        ChatGoogleGenerativeAI: Instance of the configured language model.
-    """
-    return ChatGoogleGenerativeAI(model=model_name, temperature=temperature)
+__all__ = [
+    "async_read_text",
+    "async_write_json",
+    "load_google_generative_ai_model",
+]

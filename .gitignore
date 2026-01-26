@@ -2,6 +2,7 @@
 
 /temp/
 
+data/*
 .vscode/
 .egg-info
 *_images/
