@@ -1,3 +1,9 @@
+"""Defines prompt templates for the data extraction agent.
+
+This module contains the system and human prompt templates used by the
+agent to extract and structure data from PDF exams.
+"""
+
 SYSTEM_PROMPT = """
 You are an expert in extracting structured data from pre-structured text from
  PDF exams.

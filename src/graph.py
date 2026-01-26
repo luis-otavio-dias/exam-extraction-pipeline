@@ -1,3 +1,8 @@
+"""Defines the state graph for the agent's operations.
+
+This module sets up the state graph using LangGraph, defining nodes.
+"""
+
 from typing import Literal
 
 from langchain_core.messages import AIMessage, ToolMessage
@@ -7,6 +12,7 @@ from langgraph.graph.state import CompiledStateGraph, StateGraph
 from pydantic import ValidationError
 from rich import print
 
+from config import CONFIG
 from state import State
 from tools import TOOLS, TOOLS_BY_NAME
 from utils import load_google_generative_ai_model
@@ -14,7 +20,7 @@ from utils import load_google_generative_ai_model
 
 async def call_llm(state: State) -> State:
     llm = load_google_generative_ai_model(
-        model_name="gemini-2.5-flash", temperature=0
+        model_name=CONFIG.llm.model_name, temperature=CONFIG.llm.temperature
     ).bind_tools(TOOLS)
     result = await llm.ainvoke(state["messages"])
 
