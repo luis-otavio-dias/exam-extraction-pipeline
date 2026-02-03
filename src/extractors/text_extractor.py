@@ -35,6 +35,7 @@ class PDFTextExtractor:
             else end_page
         )
 
+        # Ensure start doesn't exceed end
         if start >= end:
             return 0, 0
 
