@@ -139,13 +139,12 @@ Durante a execução, o pipeline seguirá os seguintes passos:
 
 ## Exemplo de Saída
 
-Abaixo está um trecho do JSON gerado pelo agente, estruturando a questão, alternativas e se existem imagens associadas:
-
 ```json
 [
   {
-    "question": "Qual é a capital da França?",
+    "question": "Questão 5",
     "image": false,
+    "images": [],
     "passage_text": "A França é um país localizado na Europa Ocidental...",
     "sources": [
       "https://pt.wikipedia.org/wiki/Fran%C3%A7a"
