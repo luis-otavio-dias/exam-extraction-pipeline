@@ -35,6 +35,7 @@ class PDFTextExtractor:
             else end_page
         )
 
+        # Ensure start doesn't exceed end
         if start >= end:
             return 0, 0
 
@@ -81,33 +82,3 @@ class PDFTextExtractor:
                 text += f"\n\n --- Page {page_num + 1} --- \n\n{page_text}"
 
         return text
-
-    def extract_exam_text(
-        self,
-        exam_pdf_path: Path,
-        answer_key_pdf_path: Path,
-        exam_start_page: int | None = None,
-        exam_end_page: int | None = None,
-        answer_key_separator: str = "\n\n--- Answer Key ---\n\n",
-    ) -> str:
-        """Extract text from exam PDF and answer key PDF.
-
-        Args:
-            exam_pdf_path: Path to the exam PDF file
-            answer_key_pdf_path: Path to the answer key PDF file
-            exam_start_page: Starting page for exam (inclusive, 0-indexed)
-            exam_end_page: Ending page for exam (exclusive, 0-indexed)
-            answer_key_separator: Separator text between exam and answer key
-
-        Returns:
-            Combined text from exam and answer key
-        """
-        exam_text = self.extract_text(
-            exam_pdf_path, start_page=exam_start_page, end_page=exam_end_page
-        )
-
-        if answer_key_pdf_path.exists():
-            answer_key_text = self.extract_text(pdf_path=answer_key_pdf_path)
-            exam_text += answer_key_separator + answer_key_text
-
-        return exam_text

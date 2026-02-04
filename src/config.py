@@ -1,4 +1,4 @@
-"""Configuration module for the data extraction agent.
+"""Configuration module for the data extraction pipeline.
 
 This module centralizes all configuration constants and settings,
 making them easy to modify and maintain.
@@ -74,6 +74,7 @@ class QuestionConfig:
     # Regex patterns
     question_split_pattern: str = r"(QUESTÃO\s+\d+)"
     normalize_pattern: str = r"(\d+)"
+    clean_pattern: str = r"(?i)(.+?)(?:\s?\1){3,}"
 
     # Answer key configuration
     answer_key_separator: str = "\n\n--- Answer Key ---\n\n"
