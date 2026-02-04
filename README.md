@@ -1,18 +1,47 @@
-# Agente de Extração de Dados de PDFs
+# Exam Extraction Pipeline
 
-Este projeto é um agente baseado em LangGraph projetado para extrair e estruturar dados de documentos PDF. O foco principal é extrair eficientemente questões de múltipla escolha de cadernos de prova (como o ENEM e vestibulares) e seus respectivos gabaritos, salvando o resultado em um formato JSON estruturado.  
-Na raiz do projeto, você encontrará o arquivo [`expected_output.json`](expected_output.json), que demonstra o formato esperado do JSON resultante após a extração e estruturação dos dados.
+Este projeto implementa um **pipeline de extração e estruturação de exames em PDF**, com foco em provas de múltipla escolha (ENEM, vestibulares, concursos, etc.).
+
+O objetivo principal é transformar **PDFs de provas e gabaritos** em um **formato JSON estruturado**, preservando:
+
+- imagens associadas às questões,
+- textos de apoio,
+- referências bibliográficas,
+- enunciados,
+- alternativas,
+- alternativas corretas,
+- metadados do exame.
+
+Na raiz do projeto, você encontrará o arquivo [`expected_output.json`](expected_output.json), que demonstra o formato final esperado do output JSON.
 
 ## Funcionalidades
 
-- **Extração de Texto de PDFs**: Processa tanto o PDF da prova quanto o PDF do gabarito para extrair o conteúdo textual completo.
-- **Extração de Imagens**: Capaz de extrair e salvar imagens no formato JPEG contidas no PDF da prova.
-- **Estruturação de Dados**: Utiliza um modelo de linguagem (`langchain-google-genai`) para analisar o texto extraído e estruturar as questões de múltipla escolha em um formato JSON limpo.
-- **Orquestração com LangGraph**: Emprega um grafo para gerenciar o fluxo de trabalho, desde a entrada do usuário até a chamada das ferramentas e a resposta final.
+- **Extração de Texto**
+  - Extração robusta de texto de PDFs
+  - Suporte a intervalos de páginas
+  - Normalização de conteúdo
+
+- **Extração de Imagens**
+  - Extração e filtragem de imagens relevantes
+  - Filtros por tamanho, proporção, cores e repetição
+
+- **Extração de Exames**
+  - Leitura do PDF da prova e do gabarito
+  - Associação de imagens às questões corretas
+
+- **Estruturação de Questões**
+  - Conversão do texto bruto em JSON estruturado
+  - Padronização de identificadores (`QUESTÃO XX`)
+  - Extração de alternativas, resposta correta e fontes
+
+- **Validação Determinística**
+  - Schema bem definido (Pydantic)
+  - Pós-processamento e enriquecimento de dados
+  - Controle total do output final
 
 ## Diagrama do Fluxo de Trabalho
 
-![Diagrama do Fluxo de Trabalho](img/flow_diagram.png)
+![Diagrama do Fluxo de Trabalho](img/flow_pipeline.png)
 
 ## Tecnologias Utilizadas
 
@@ -20,37 +49,32 @@ Na raiz do projeto, você encontrará o arquivo [`expected_output.json`](expecte
   - `langchain`
   - `langchain-core`
   - `langchain-google-genai`
-- **LangGraph**: Para orquestrar o fluxo de execução do agente.
-- **pypdf**: Para extração eficiente de imagens JPEG de PDFs.
 - **fitz (PyMuPDF)**: Para extração de texto de PDFs e manipulação de imagens.
 
-### Por que duas bibliotecas de manipulação de PDF?
+### Por que PyMuPDF?
 
-O projeto utiliza duas bibliotecas complementares:
-
-- **PyMuPDF (fitz)**: Escolhida para extração de texto e imagens com maior controle e performance. Permite filtrar imagens por características (tamanho, proporção, cores), extraindo apenas conteúdo potencialmente relevante. Oferece velocidade superior na extração de texto e manipulação geral de imagens.
-
-- **pypdf**: Otimizada especificamente para extração em massa de imagens JPEG. Embora o fitz seja mais versátil, pypdf demonstrou melhor performance no cenário específico de extrair todas as imagens JPEG de um documento.
+**PyMuPDF (fitz)**: Escolhida para extração de texto e imagens com maior controle e performance. Permite filtrar imagens por características (tamanho, proporção, cores), extraindo apenas conteúdo potencialmente relevante. Oferece velocidade superior na extração de texto e manipulação geral de imagens.
 
 ## Estrutura do Projeto
 
-```
+```plaintext
 .
-├── .env-example
-├── .gitignore
-├── .python-version
-├── README.md
-├── data/                   # Pasta para armazar pdfs de entrada
+├── data                            # Pasta para armazenar PDFs de entrada
 │   └── exemplo.pdf
-├── pyproject.toml          # Definições do projeto e dependências
-├── src/
-│   ├── graph.py            # Definição do StateGraph
-│   ├── main.py             # Ponto de entrada principal da aplicação
-│   ├── prompts.py          # Prompts do sistema e do usuário
-│   ├── state.py            # Definição do estado do grafo
-│   ├── tools.py            # Ferramentas de extração (texto, imagens, JSON)
-│   └── utils.py            # Utilitários (ex: carregar modelo)
-└── uv.lock                 # Lockfile do gerenciador de pacotes uv
+├── img
+│   └── flow_pipeline.png
+├── src
+│   ├── extractors/                 # Módulos de extração (texto, imagens, exames)
+│   ├── models/                     # Modelos de dados (Pydantic)
+│   ├── processors/                 # Processadores de texto e questões
+│   ├── utils/                      # Utilitários (ex: carregar modelo)
+│   ├── config.py                   # Configurações do sistema
+│   ├── pipeline.py                 # Ponto de entrada principal da aplicação
+│   └── prompts.py                  # Prompts do sistema
+├── expected_output.json            # Exemplo do output JSON esperado
+├── pyproject.toml                  # Definições do projeto e dependências
+└── README.md
+
 ```
 
 ## Instalação
@@ -58,12 +82,11 @@ O projeto utiliza duas bibliotecas complementares:
 1.  **Clone o repositório**:
 
     ```bash
-    git clone https://github.com/luis-otavio-dias/data-extraction-agent.git
+    git clone https://github.com/luis-otavio-dias/exam-extraction-pipeline.git
     cd data-extraction-agent
     ```
 
 2.  **Dependências**:
-
     - **Com UV**  
       O projeto usa uv para gerenciar dependências. Se você utiliza uv, execute no diretório do projeto:
 
@@ -72,7 +95,6 @@ O projeto utiliza duas bibliotecas complementares:
       ```
 
     - **Alternativa sem UV**
-
       - Crie e ative um ambiente virtual:
 
         ```bash
@@ -100,24 +122,20 @@ O projeto utiliza duas bibliotecas complementares:
     AI_MODEL_API_KEY="sua_chave_de_api_aqui"
     ```
 
-## Como Usar
-
-O agente **precisa** receber os caminhos dos arquivos PDF para iniciar o processo de extração e estruturação dos dados, também é necessário indicar onde salvar as imagens extraídas.  
-Essas informações estão definidas nos `HUMAN_PROMPTS` localizados em `src/prompts.py` e devem ser ajustadas conforme necessário.
-
-Para executar o agente usando uv, basta rodar o `main.py` indicando seu arquivo `.env`:
+## Execução do Pipeline
 
 ```bash
-  uv run --env-file=".env" src/main.py
+  uv run --env-file=".env" src/pipeline.py
 ```
 
-O script executará o grafo de forma assíncrona. Ele irá:
+Durante a execução, o pipeline seguirá os seguintes passos:
 
-1.  Ler os prompts de `src/prompts.py`.
-2.  Chamar a ferramenta `extract_exam_pdf_text` para ler os PDFs.
-3.  Chamar a ferramenta `pdf_extract_jpegs` para salvar as imagens em `media_images/`.
-4.  Chamar a ferramenta `structure_questions` para converter o texto em JSON.
-5.  Salvar o JSON estruturado no arquivo `src/final_output.json`.
+1.  Extrair o conteúdo da prova e do gabarito dos PDFs.
+2.  Normalizar o conteúdo textual.
+3.  Segmentar o texto em questões individuais.
+4.  Associar imagens extraídas às questões corretas.
+5.  Estruturar cada questão em um formato JSON.
+6.  Validar e salvar o output final.
 
 ## Exemplo de Saída
 
@@ -146,4 +164,84 @@ Abaixo está um trecho do JSON gerado pelo agente, estruturando a questão, alte
 ]
 ```
 
----
+## Racional por trás da arquitetura do pipeline
+
+### **Por que não usar um agente LLM autônomo?**
+
+Inicialmente, neste projeto foi experimentado uma arquitetura baseada em agentes usando LangChain/LangGraph, onde um LLM coordenava múltiplas ferramentas (extração de texto, extração de imagens, estruturação de questões). No entanto, o agente não tinha autonomia real. A abordagem e as ferramentas a serem utilizadas eram estritamente definidas em um system prompt que guiava linearmente o fluxo de trabalho do agente, em vez de permitir decisões dinâmicas, invalidando o propósito de um agente autônomo.  
+Após uma avaliação arquitetural, essa abordagem foi substituída por um **pipeline determinístico** com orquestração explícita em código.
+
+### **Justificativa do design**
+
+O workflow para o processamento dos exames é totalmente conhecido e determinístico:
+
+- Extrair texto
+- Normalizar conteúdo
+- Estruturar questões
+- Validar output
+
+Como o fluxo de controle é previsível, usar um agente autônomo introduziu complexidade desnecessária, maior latência e menor capacidade de depuração.
+
+### **Abordagem atual**
+
+O sistema agora segue um pipeline linear, onde:
+
+- A lógica de negócios e orquestração são gerenciadas pelo código da aplicação.
+
+- A LLM é usada para transformação semântica (texto -> JSON estruturado) e para inferência de informações (exame, ano, área).
+
+- Toda a validação e persistência são realizadas de forma determinística
+
+### **Benefícios dessa abordagem**
+
+- Melhoria na observabilidade e depuração
+
+- Menor custo e latência
+
+- Versionamento de prompts mais fácil e evolução do schema
+
+- Separação clara de responsabilidades
+
+### **Determinismo como princípio arquitetural**
+
+O sistema foi projetado com base no pressuposto de que o domínio do problema
+(extração de exames de múltipla escolha) possui um workflow conhecido e repetível.
+Dessa forma, todas as decisões de controle de fluxo são realizadas de forma
+explícita no código, evitando comportamento emergente ou não determinístico.
+
+### **Separação entre orquestração e inferência**
+
+A arquitetura separa claramente:
+
+- **Orquestração e regras de negócio** (controladas pelo código)
+- **Inferência semântica** (delegada à LLM)
+
+Essa separação reduz acoplamento, facilita testes e permite evolução independente
+do pipeline e dos prompts.
+
+### **Uso restrito de LLMs**
+
+A LLM não executa ações, não escolhe ferramentas e não controla estados.
+Seu papel é restrito à transformação de dados não estruturados em estruturas
+formais validadas por schema.
+
+Essa decisão reduz custo operacional, latência e dificuldade de depuração.
+
+### **Observabilidade e depuração**
+
+Cada etapa do pipeline pode ser inspecionada de forma isolada:
+
+- texto extraído
+- chunks de questões
+- respostas da LLM
+- validação final
+
+Isso permite identificar falhas com precisão, algo inviável em agentes autônomos.
+
+### **Evolução futura**
+
+A arquitetura atual permite:
+
+- substituição do modelo de LLM sem impacto no fluxo
+- evolução do schema de saída
+- introdução pontual de agentes apenas em cenários exploratórios
