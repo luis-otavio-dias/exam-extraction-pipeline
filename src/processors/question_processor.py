@@ -7,7 +7,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.output_parsers import JsonOutputParser
 
 from config import CONFIG
-from prompts import STRUCTURE_QUESTION_PROMPT
+from prompts.loader import PromptLoader
 from utils.llm import load_google_generative_ai_model
 
 
@@ -28,6 +28,7 @@ class QuestionProcessor:
 
         self.parser = JsonOutputParser()
         self.semaphore = Semaphore(CONFIG.llm.max_concurrent_requests)
+        self.prompt = PromptLoader()
 
     def split_into_questions(self, text: str) -> list[str]:
         """Split the exam text into chunks based on question delimiters.
@@ -72,11 +73,24 @@ class QuestionProcessor:
         parser: JsonOutputParser,
         semaphore: Semaphore,
     ) -> dict[str, Any] | None:
+        """Process a single question chunk using the LLM and parse the output.
+        Args:
+            chunk: The question chunk to process.
+            answer_key_text: The answer key text for reference.
+            llm: The language model to use for processing.
+            parser: The output parser to structure the response.
+            semaphore: Semaphore to limit concurrent LLM requests.
+        Returns:
+            dict: Representing the structured question data.
+            None: If processing fails.
+        """
         if "QUESTÃO" not in chunk:
             return None
 
-        prompt = STRUCTURE_QUESTION_PROMPT.format(
-            chunk=chunk, answer_key_text=answer_key_text
+        prompt = await self.prompt.async_load(
+            prompt_path="structure_questions/v1.md",
+            chunk=chunk,
+            answer_key_text=answer_key_text,
         )
 
         async with semaphore:
@@ -95,6 +109,13 @@ class QuestionProcessor:
     async def structure_questions(
         self, question_chunks: list[str], answer_key_text: str
     ) -> list[dict[str, Any]]:
+        """Structure a list of question chunks using the LLM.
+        Args:
+            question_chunks: List of question chunks to process.
+            answer_key_text: The answer key text for reference.
+        Returns:
+            list: List of structured question data dictionaries.
+        """
 
         results = await asyncio.gather(
             *[
@@ -135,13 +156,15 @@ class QuestionProcessor:
         """
 
         for question in structured_questions:
-            has_url = any(
-                "http" in str(source) for source in question.get("sources", [])
-            )
-            is_text_empty = not question.get("passage_text", "").strip()
+            # has_url = any(
+            #     "http" in str(source) for source in question.get(
+            #         "sources", []
+            #     )
+            # )
+            # is_text_empty = not question.get("passage_text", "").strip()
 
-            if has_url and is_text_empty:
-                question["image"] = True
+            # if has_url and is_text_empty:
+            #     question["image"] = True
 
             has_image = question.get("image", False)
 
