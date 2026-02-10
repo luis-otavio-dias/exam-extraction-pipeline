@@ -201,31 +201,6 @@ O sistema agora segue um pipeline linear, onde:
 
 - Separação clara de responsabilidades
 
-### **Determinismo como princípio arquitetural**
-
-O sistema foi projetado com base no pressuposto de que o domínio do problema
-(extração de exames de múltipla escolha) possui um workflow conhecido e repetível.
-Dessa forma, todas as decisões de controle de fluxo são realizadas de forma
-explícita no código, evitando comportamento emergente ou não determinístico.
-
-### **Separação entre orquestração e inferência**
-
-A arquitetura separa claramente:
-
-- **Orquestração e regras de negócio** (controladas pelo código)
-- **Inferência semântica** (delegada à LLM)
-
-Essa separação reduz acoplamento, facilita testes e permite evolução independente
-do pipeline e dos prompts.
-
-### **Uso restrito de LLMs**
-
-A LLM não executa ações, não escolhe ferramentas e não controla estados.
-Seu papel é restrito à transformação de dados não estruturados em estruturas
-formais validadas por schema.
-
-Essa decisão reduz custo operacional, latência e dificuldade de depuração.
-
 ### **Observabilidade e depuração**
 
 Cada etapa do pipeline pode ser inspecionada de forma isolada:
@@ -235,12 +210,4 @@ Cada etapa do pipeline pode ser inspecionada de forma isolada:
 - respostas da LLM
 - validação final
 
-Isso permite identificar falhas com precisão, algo inviável em agentes autônomos.
-
-### **Evolução futura**
-
-A arquitetura atual permite:
-
-- substituição do modelo de LLM sem impacto no fluxo
-- evolução do schema de saída
-- introdução pontual de agentes apenas em cenários exploratórios
+Isso permite identificar falhas com precisão.
