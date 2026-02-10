@@ -77,7 +77,7 @@ class QuestionConfig:
     clean_pattern: str = r"(?i)(.+?)(?:\s?\1){3,}"
 
     # Answer key configuration
-    answer_key_separator: str = "\n\n--- Answer Key ---\n\n"
+    answer_key_separator: str = "--- Answer Key ---"
 
 
 @dataclass
