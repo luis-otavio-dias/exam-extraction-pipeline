@@ -88,7 +88,7 @@ class QuestionProcessor:
             return None
 
         prompt = await self.prompt.async_load(
-            prompt_path="structure_questions/v1.md",
+            prompt_path="structure_questions/v2.md",
             chunk=chunk,
             answer_key_text=answer_key_text,
         )
