@@ -14,7 +14,10 @@ async def run_pipeline() -> None:
     start = time.perf_counter()
     exam_extractor = ExamExtractor()
     text_processor = TextProcessor()
-    question_processor = QuestionProcessor()
+    question_processor = QuestionProcessor(
+        requests_per_minute=20,
+        max_concurrent_requests=10,
+    )
 
     output_path = CONFIG.paths.final_output_path
 
@@ -33,7 +36,7 @@ async def run_pipeline() -> None:
     question_chunks = question_processor.split_into_questions(exam_text)
 
     structured_questions = await question_processor.structure_questions(
-        question_chunks, answer_key_text
+        "structure_questions/v3.md", question_chunks, answer_key_text
     )
 
     question_processor.attach_images_to_questions(
