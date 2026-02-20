@@ -3,6 +3,7 @@ import re
 from asyncio import Semaphore
 from typing import Any
 
+from aiolimiter import AsyncLimiter
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.output_parsers import JsonOutputParser
 
@@ -14,20 +15,33 @@ from utils.llm import load_google_generative_ai_model
 class QuestionProcessor:
     """Processes extracted questions for further analysis."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        llm: BaseChatModel | None = None,
+        requests_per_minute: int | None = None,
+        max_concurrent_requests: int | None = None,
+    ) -> None:
         self.question_split_pattern = CONFIG.question.question_split_pattern
         self.answer_key_separator = CONFIG.question.answer_key_separator
         self.re_question_split = re.compile(
             self.question_split_pattern, re.IGNORECASE
         )
 
-        self.llm = load_google_generative_ai_model(
+        self.llm: BaseChatModel = llm or load_google_generative_ai_model(
             model_name=CONFIG.llm.model_name,
             temperature=CONFIG.llm.temperature,
         )
 
+        rpm = requests_per_minute or CONFIG.llm.requests_per_minute
+        concurrency = max_concurrent_requests or min(
+            CONFIG.llm.max_concurrent_requests, rpm
+        )
+
         self.parser = JsonOutputParser()
-        self.semaphore = Semaphore(CONFIG.llm.max_concurrent_requests)
+        self.semaphore = Semaphore(concurrency)
+        self.rate_limiter = AsyncLimiter(max_rate=rpm, time_period=60)
+        self.max_retries = CONFIG.llm.max_retries
+        self.retry_base_delay = CONFIG.llm.retry_base_delay
         self.prompt = PromptLoader()
 
     def split_into_questions(self, text: str) -> list[str]:
@@ -67,11 +81,9 @@ class QuestionProcessor:
 
     async def process_question_chunk(
         self,
+        prompt_path: str,
         chunk: str,
         answer_key_text: str,
-        llm: BaseChatModel,
-        parser: JsonOutputParser,
-        semaphore: Semaphore,
     ) -> dict[str, Any] | None:
         """Process a single question chunk using the LLM and parse the output.
         Args:
@@ -88,26 +100,44 @@ class QuestionProcessor:
             return None
 
         prompt = await self.prompt.async_load(
-            prompt_path="structure_questions/v2.md",
+            prompt_path=prompt_path,
             chunk=chunk,
             answer_key_text=answer_key_text,
         )
 
-        async with semaphore:
-            try:
-                response = await llm.ainvoke(prompt)
-                content = response.content
+        for attempt in range(1, self.max_retries + 1):
+            async with self.rate_limiter, self.semaphore:
+                try:
+                    response = await self.llm.ainvoke(prompt)
+                    content = response.content
 
-                if not isinstance(content, str):
-                    content = str(content)
+                    if not isinstance(content, str):
+                        content = str(content)
 
-                return parser.invoke(content)
-            except Exception as e:
-                print(f"Error processing chunk: {e}")
-                return None
+                    return self.parser.invoke(content)
+                except Exception as e:
+                    if attempt < self.max_retries:
+                        delay = self.retry_base_delay * (2 ** (attempt - 1))
+                        print(
+                            f"[Attempt {attempt}/{self.max_retries}] "
+                            f"Error processing chunk: {e}. "
+                            f"Retrying in {delay:.1f}s..."
+                        )
+                        await asyncio.sleep(delay)
+                    else:
+                        print(
+                            f"[Attempt {attempt}/{self.max_retries}] "
+                            f"Error processing chunk: {e}. "
+                            f"Giving up."
+                        )
+                        return None
+        return None
 
     async def structure_questions(
-        self, question_chunks: list[str], answer_key_text: str
+        self,
+        prompt_path: str,
+        question_chunks: list[str],
+        answer_key_text: str,
     ) -> list[dict[str, Any]]:
         """Structure a list of question chunks using the LLM.
         Args:
@@ -120,11 +150,9 @@ class QuestionProcessor:
         results = await asyncio.gather(
             *[
                 self.process_question_chunk(
+                    prompt_path,
                     chunk,
                     answer_key_text,
-                    self.llm,
-                    self.parser,
-                    self.semaphore,
                 )
                 for chunk in question_chunks
             ]

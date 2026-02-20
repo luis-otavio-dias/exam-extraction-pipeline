@@ -12,11 +12,10 @@ from pydantic import BaseModel, Field
 class QuestionOption(BaseModel):
     """Model for question answer options."""
 
-    A: str = ""
-    B: str = ""
-    C: str = ""
-    D: str = ""
-    E: str = ""
+    label: str = Field(
+        ..., pattern=r"^[A-E]$", description="Option label (A-E)"
+    )
+    text: str = Field(..., description="Full text of the option")
 
 
 class Question(BaseModel):
@@ -45,9 +44,9 @@ class Question(BaseModel):
         description="Source URLs or references",
     )
     statement: str = Field(..., description="Question statement")
-    options: QuestionOption = Field(..., description="Answer options")
-    correct_option: str = Field(
-        ..., pattern=r"^[A-E]$", description="Correct answer"
+    options: list[QuestionOption] = Field(..., description="Answer options")
+    correct_option: QuestionOption = Field(
+        ..., description="Correct answer option"
     )
 
     class Config:
@@ -61,14 +60,15 @@ class Question(BaseModel):
                 "passage_text": "",
                 "sources": ["http://example.com"],
                 "statement": "Qual é a resposta correta?",
-                "options": {
-                    "A": "Opção A",
-                    "B": "Opção B",
-                    "C": "Opção C",
-                    "D": "Opção D",
-                    "E": "Opção E",
-                },
-                "correct_option": "A",
+                "options": [
+                    {"label": "A", "text": "Opção A"},
+                    {"label": "B", "text": "Opção B"},
+                    {"label": "C", "text": "Opção C"},
+                    {"label": "D", "text": "Opção D"},
+                    {"label": "E", "text": "Opção E"},
+                ],
+                "correct_option": {"label": "A", "text": "Opção A"},
+                "metadata": {"area": "Ciências da Natureza"},
             }
         }
 

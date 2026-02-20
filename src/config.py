@@ -54,7 +54,10 @@ class LLMConfig:
 
     model_name: str = "gemini-2.5-flash"
     temperature: float = 0
-    max_concurrent_requests: int = 30
+    max_concurrent_requests: int = 10
+    requests_per_minute: int = 50
+    max_retries: int = 3
+    retry_base_delay: float = 2.0
 
     def __post_init__(self) -> None:
         """Override with environment variables if set."""
@@ -65,6 +68,14 @@ class LLMConfig:
             "MAX_CONCURRENT_REQUESTS", self.max_concurrent_requests
         )
         self.max_concurrent_requests = int(env_max)
+        env_rpm = os.getenv("LLM_RPM", self.requests_per_minute)
+        self.requests_per_minute = int(env_rpm)
+        env_retries = os.getenv("LLM_MAX_RETRIES", self.max_retries)
+        self.max_retries = int(env_retries)
+        env_delay = os.getenv(
+            "LLM_RETRY_BASE_DELAY", self.retry_base_delay
+        )
+        self.retry_base_delay = float(env_delay)
 
 
 @dataclass
