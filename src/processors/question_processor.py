@@ -1,13 +1,14 @@
 import asyncio
 import re
 from asyncio import Semaphore
-from typing import Any
 
 from aiolimiter import AsyncLimiter
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.output_parsers import JsonOutputParser
+from pydantic import ValidationError
 
 from config import CONFIG
+from models.question import Question
 from prompts.loader import PromptLoader
 from utils.llm import load_google_generative_ai_model
 
@@ -37,7 +38,7 @@ class QuestionProcessor:
             CONFIG.llm.max_concurrent_requests, rpm
         )
 
-        self.parser = JsonOutputParser()
+        self.parser = JsonOutputParser(pydantic_object=Question)
         self.semaphore = Semaphore(concurrency)
         self.rate_limiter = AsyncLimiter(max_rate=rpm, time_period=60)
         self.max_retries = CONFIG.llm.max_retries
@@ -84,7 +85,7 @@ class QuestionProcessor:
         prompt_path: str,
         chunk: str,
         answer_key_text: str,
-    ) -> dict[str, Any] | None:
+    ) -> Question | None:
         """Process a single question chunk using the LLM and parse the output.
         Args:
             chunk: The question chunk to process.
@@ -103,10 +104,13 @@ class QuestionProcessor:
             prompt_path=prompt_path,
             chunk=chunk,
             answer_key_text=answer_key_text,
+            format_instructions=self.parser.get_format_instructions(),
         )
 
         for attempt in range(1, self.max_retries + 1):
             async with self.rate_limiter, self.semaphore:
+                content = None
+
                 try:
                     response = await self.llm.ainvoke(prompt)
                     content = response.content
@@ -114,22 +118,34 @@ class QuestionProcessor:
                     if not isinstance(content, str):
                         content = str(content)
 
-                    return self.parser.invoke(content)
-                except Exception as e:
+                    parsed = self.parser.invoke(content)
+
+                    return Question.model_validate(parsed)
+
+                except (ValidationError, Exception) as e:
+                    is_validation_error = isinstance(e, ValidationError)
+                    error_type = (
+                        "ValidationError"
+                        if is_validation_error
+                        else "Exception"
+                    )
+
                     if attempt < self.max_retries:
                         delay = self.retry_base_delay * (2 ** (attempt - 1))
                         print(
                             f"[Attempt {attempt}/{self.max_retries}] "
-                            f"Error processing chunk: {e}. "
+                            f"{error_type}: {e}. "
                             f"Retrying in {delay:.1f}s..."
                         )
                         await asyncio.sleep(delay)
                     else:
                         print(
                             f"[Attempt {attempt}/{self.max_retries}] "
-                            f"Error processing chunk: {e}. "
+                            f"{error_type}: {e}. "
                             f"Giving up."
                         )
+                        if content:
+                            print(f"LLM Response Content: {content[:500]}...")
                         return None
         return None
 
@@ -138,7 +154,7 @@ class QuestionProcessor:
         prompt_path: str,
         question_chunks: list[str],
         answer_key_text: str,
-    ) -> list[dict[str, Any]]:
+    ) -> list[Question]:
         """Structure a list of question chunks using the LLM.
         Args:
             question_chunks: List of question chunks to process.
@@ -171,33 +187,21 @@ class QuestionProcessor:
 
     def attach_images_to_questions(
         self,
-        structured_questions: list[dict[str, Any]],
+        structured_questions: list[Question],
         question_image_map: dict[str, list[str]],
     ) -> None:
         """Determine if the question contains image information and
         update the question data accordingly.
 
         Args:
-            structured_questions: List of question dictionaries to update
+            structured_questions: List of Question objects to update
             with image info.
             question_image_map: Mapping of question identifiers to image URLs.
         """
 
         for question in structured_questions:
-            # has_url = any(
-            #     "http" in str(source) for source in question.get(
-            #         "sources", []
-            #     )
-            # )
-            # is_text_empty = not question.get("passage_text", "").strip()
-
-            # if has_url and is_text_empty:
-            #     question["image"] = True
-
-            has_image = question.get("image", False)
-
-            if has_image:
+            if question.image:
                 for q_name, images in question_image_map.items():
-                    if q_name in question.get("question", ""):
-                        question["images"] = images
+                    if q_name in question.question:
+                        question.images = images
                         break
