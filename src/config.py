@@ -72,9 +72,7 @@ class LLMConfig:
         self.requests_per_minute = int(env_rpm)
         env_retries = os.getenv("LLM_MAX_RETRIES", self.max_retries)
         self.max_retries = int(env_retries)
-        env_delay = os.getenv(
-            "LLM_RETRY_BASE_DELAY", self.retry_base_delay
-        )
+        env_delay = os.getenv("LLM_RETRY_BASE_DELAY", self.retry_base_delay)
         self.retry_base_delay = float(env_delay)
 
 
