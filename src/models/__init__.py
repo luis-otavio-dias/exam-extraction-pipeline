@@ -1,5 +1,5 @@
 """Models package for the data extraction agent."""
 
-from .question import ExamData, Question, QuestionOption
+from .question import Exam, Question, QuestionOption
 
-__all__ = ["ExamData", "Question", "QuestionOption"]
+__all__ = ["Exam", "Question", "QuestionOption"]
