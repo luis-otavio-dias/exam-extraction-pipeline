@@ -32,26 +32,6 @@ class ExamExtractor:
             ),
         }
 
-    # def extract_questions(self):
-    #     questions = []
-    #     for item in self.exam_data.get("questions", []):
-    #         question = {
-    #             "id": item.get("id"),
-    #             "text": item.get("text"),
-    #             "choices": item.get("choices", []),
-    #             "correct_answer": item.get("correct_answer"),
-    #         }
-    #         questions.append(question)
-    #     return questions
-
-    # def extract_metadata(self):
-    #     metadata = {
-    #         "exam_title": self.exam_data.get("title"),
-    #         "exam_date": self.exam_data.get("date"),
-    #         "total_questions": len(self.exam_data.get("questions", [])),
-    #     }
-    #     return metadata
-
     def map_questions(
         self,
         question_map: dict[str, list[str]],

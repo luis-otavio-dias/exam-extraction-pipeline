@@ -5,6 +5,7 @@ with page range support and normalization.
 """
 
 from pathlib import Path
+from typing import cast
 
 import fitz
 
@@ -46,6 +47,7 @@ class PDFTextExtractor:
         pdf_path: Path,
         start_page: int | None = None,
         end_page: int | None = None,
+        page_marker: str | None = "\n\n --- Page {page_num} --- \n\n",
     ) -> str:
         """Extract text from a PDF file.
 
@@ -78,7 +80,14 @@ class PDFTextExtractor:
 
             for page_num in range(start, end):
                 page = pdf[page_num]
-                page_text = page.get_text()
-                text += f"\n\n --- Page {page_num + 1} --- \n\n{page_text}"
+                page_text = cast("str", page.get_text())
+
+                if page_marker is not None:
+                    formatted_marker = page_marker.format(
+                        page_num=page_num + 1
+                    )
+                    text += f"{formatted_marker} {page_text}"
+                else:
+                    text += page_text
 
         return text
