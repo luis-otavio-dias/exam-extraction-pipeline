@@ -6,7 +6,12 @@ from rich import print
 
 from config import CONFIG
 from extractors.exam_extractor import ExamExtractor
-from processors import QuestionProcessor, TextProcessor
+from models.question import Exam
+from processors import (
+    ExamDiagnosticProcessor,
+    QuestionProcessor,
+    TextProcessor,
+)
 from utils.file_operations import async_write_json
 
 
@@ -14,12 +19,28 @@ async def run_pipeline() -> None:
     start = time.perf_counter()
     exam_extractor = ExamExtractor()
     text_processor = TextProcessor()
+    exam_diagnostic_processor = ExamDiagnosticProcessor()
+
     question_processor = QuestionProcessor(
         requests_per_minute=50,
         max_concurrent_requests=30,
     )
 
     output_path = CONFIG.paths.final_output_path
+
+    print("[bold blue]Running exam diagnostic...[/bold blue]\n")
+    exam_metadata = await exam_diagnostic_processor.diagnose(
+        prompt_path="diagnostic/v3.md",
+        exam_pdf_path=Path("data/prova.pdf"),
+        answer_key_pdf_path=Path("data/gabarito.pdf"),
+    )
+
+    if exam_metadata is None:
+        print(
+            "[bold red]Failed to diagnose the exam. "
+            "Exiting pipeline.[/bold red]"
+        )
+        return
 
     print("[bold green]Starting exam processing pipeline...[/bold green]\n")
 
@@ -51,7 +72,10 @@ async def run_pipeline() -> None:
 
     print("[bold blue]Structuring questions using LLM... [/bold blue]\n")
     structured_questions = await question_processor.structure_questions(
-        "structure_questions/v4.md", question_chunks, answer_key_text
+        "structure_questions/v4.md",
+        question_chunks,
+        answer_key_text,
+        exam_metadata,
     )
 
     print("[bold blue]Attaching images to questions... [/bold blue]\n")
@@ -59,10 +83,15 @@ async def run_pipeline() -> None:
         structured_questions, exam_data["images_map"]
     )
 
-    serialized_questions = [q.model_dump() for q in structured_questions]
+    exam = Exam(
+        metadata=exam_metadata,
+        questions=structured_questions,
+    )
 
     print(f"[bold green]Writing output to {output_path}...[/bold green]\n")
-    await async_write_json(output_path, serialized_questions)
+
+    await async_write_json(output_path, exam.model_dump())
+
     end = time.perf_counter()
 
     print(f"Pipeline completed in {end - start:.2f} seconds.")
