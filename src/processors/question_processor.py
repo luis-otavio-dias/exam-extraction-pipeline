@@ -8,8 +8,9 @@ from langchain_core.output_parsers import JsonOutputParser
 from pydantic import ValidationError
 
 from config import CONFIG
-from models.question import Question
+from models.question import ExamProfile, Question
 from prompts.loader import PromptLoader
+from utils.build_question_id import build_question_id, extract_question_number
 from utils.llm import load_google_generative_ai_model
 
 
@@ -85,6 +86,7 @@ class QuestionProcessor:
         prompt_path: str,
         chunk: str,
         answer_key_text: str,
+        exam_metadata: ExamProfile,
     ) -> Question | None:
         """Process a single question chunk using the LLM and parse the output.
         Args:
@@ -120,7 +122,22 @@ class QuestionProcessor:
 
                     parsed = self.parser.invoke(content)
 
-                    return Question.model_validate(parsed)
+                    question = Question.model_validate(parsed)
+
+                    question_id = build_question_id(
+                        exam_name_base=exam_metadata.exam_name_base,
+                        exam_name_sigle=exam_metadata.exam_name_sigle,
+                        exam_variant=exam_metadata.exam_variant,
+                        exam_year=exam_metadata.exam_year,
+                        question_number=extract_question_number(
+                            question.question
+                        ),
+                    )
+
+                    question.question_id = question_id
+                    return question.model_copy(
+                        update={"question_id": question_id}
+                    )
 
                 except (ValidationError, Exception) as e:
                     is_validation_error = isinstance(e, ValidationError)
@@ -154,6 +171,7 @@ class QuestionProcessor:
         prompt_path: str,
         question_chunks: list[str],
         answer_key_text: str,
+        exam_metadata: ExamProfile,
     ) -> list[Question]:
         """Structure a list of question chunks using the LLM.
         Args:
@@ -169,6 +187,7 @@ class QuestionProcessor:
                     prompt_path,
                     chunk,
                     answer_key_text,
+                    exam_metadata,
                 )
                 for chunk in question_chunks
             ]
