@@ -11,14 +11,14 @@ from pydantic import ValidationError
 
 from config import CONFIG
 from extractors.text_extractor import PDFTextExtractor
-from models.question import ExamDiagnostic
+from models.question import ExamProfile
 from prompts.loader import PromptLoader
 from utils.llm import load_google_generative_ai_model
 
 _MIN_PAGES_FOR_MIDDLE_SAMPLE = 2
 
 
-class DiagnosticProcessor:
+class ExamDiagnosticProcessor:
     """Processor for analyzing and diagnosing question extraction results."""
 
     def __init__(
@@ -31,7 +31,7 @@ class DiagnosticProcessor:
             model_name=CONFIG.llm.model_name,
             temperature=CONFIG.llm.temperature,
         )
-        self.parser = JsonOutputParser(pydantic_object=ExamDiagnostic)
+        self.parser = JsonOutputParser(pydantic_object=ExamProfile)
         self.prompt = PromptLoader()
         rpm = requests_per_minute or CONFIG.llm.requests_per_minute
         concurrency = max_concurrent_requests or min(
@@ -68,7 +68,7 @@ class DiagnosticProcessor:
         prompt_path: str,
         exam_pdf_path: Path,
         answer_key_pdf_path: Path | None,
-    ) -> ExamDiagnostic | None:
+    ) -> ExamProfile | None:
         """Run diagnostic analysis on the extracted exam data."""
 
         exam_sample = self.extract_sample(exam_pdf_path)
@@ -98,7 +98,7 @@ class DiagnosticProcessor:
                         content = str(content)
 
                     parsed = self.parser.invoke(content)
-                    return ExamDiagnostic.model_validate(parsed)
+                    return ExamProfile.model_validate(parsed)
 
                 except (ValidationError, Exception) as e:
                     is_validation_error = isinstance(e, ValidationError)
