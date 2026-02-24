@@ -35,6 +35,7 @@ class Question(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
+                "question_id": "",
                 "question": "QUESTÃO 01",
                 "passage_text": "",
                 "sources": ["http://example.com"],
@@ -57,6 +58,9 @@ class Question(BaseModel):
         }
     )
 
+    question_id: str = Field(
+        default="", description="Unique identifier for the question"
+    )
     question: str = Field(..., description="Question identifier")
     passage_text: str = Field(default="", description="Question passage text")
     sources: list[str] = Field(
@@ -79,7 +83,7 @@ class Question(BaseModel):
     )
 
 
-class ExamDiagnostic(BaseModel):
+class ExamProfile(BaseModel):
     """Model for diagnostic analysis results of an exam PDF."""
 
     model_config = ConfigDict(
@@ -112,8 +116,8 @@ class ExamDiagnostic(BaseModel):
             " (e.g., '2024 - 1º Dia - Caderno Azul')"
         ),
     )
-    exam_year: int | None = Field(
-        default=None, description="Year the exam was administered"
+    exam_year: int = Field(
+        default=0, description="Year the exam was administered"
     )
     exam_style: Literal[
         "enem_like", "vestibular", "concurso", "internal_exam", "unknown"
@@ -140,20 +144,22 @@ class Exam(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "questions": [],
                 "metadata": {
-                    "exam_name": "ENEM",
+                    "exam_name_base": "Exame Nacional do Ensino Médio",
+                    "exam_name_sigle": "ENEM",
+                    "exam_variant": "2024 - 1º Dia - Caderno Azul",
                     "exam_year": 2024,
-                    "exam_date": "2024-11-03",
                     "exam_type": "multiple_choice",
                     "exam_style": "enem",
+                    "answer_key_location": "separate_document",
                     "total_questions": 95,
                 },
+                "questions": [],
             }
         }
     )
 
-    questions: list[Question] = Field(..., description="List of questions")
-    metadata: dict[str, Any] = Field(
-        default_factory=dict, description="Exam metadata"
+    metadata: ExamProfile = Field(
+        default_factory=ExamProfile, description="Exam profile metadata"
     )
+    questions: list[Question] = Field(..., description="List of questions")
