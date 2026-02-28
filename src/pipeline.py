@@ -1,8 +1,7 @@
 import asyncio
+import logging
 import time
 from pathlib import Path
-
-from rich import print
 
 from config import CONFIG
 from extractors.exam_extractor import ExamExtractor
@@ -14,8 +13,30 @@ from processors import (
 )
 from utils.file_operations import async_write_json
 
+logger = logging.getLogger(__name__)
 
-async def run_pipeline() -> None:
+
+async def run_pipeline(
+    exam_pdf_path: Path,
+    answer_key_pdf_path: Path | None,
+    images_output_dir: Path,
+    *,
+    output_path: Path | None = None,
+) -> Exam:
+    """Run the full exam extraction pipeline.
+
+    Args:
+        exam_pdf_path: Path to the exam PDF file.
+        answer_key_pdf_path: Path to the answer key PDF (or None).
+        images_output_dir: Directory to store extracted images.
+        output_path: If provided, write the result JSON to this path.
+
+    Returns:
+        The constructed Exam object.
+
+    Raises:
+        RuntimeError: If the exam diagnostic fails.
+    """
     start = time.perf_counter()
     exam_extractor = ExamExtractor()
     text_processor = TextProcessor()
@@ -26,51 +47,41 @@ async def run_pipeline() -> None:
         max_concurrent_requests=30,
     )
 
-    output_path = CONFIG.paths.final_output_path
-
-    print("[bold blue]Running exam diagnostic...[/bold blue]\n")
+    logger.info("Running exam diagnostic...")
     exam_metadata = await exam_diagnostic_processor.diagnose(
         prompt_path="diagnostic/v3.md",
-        exam_pdf_path=Path("data/prova.pdf"),
-        answer_key_pdf_path=Path("data/gabarito.pdf"),
+        exam_pdf_path=exam_pdf_path,
+        answer_key_pdf_path=answer_key_pdf_path,
     )
 
     if exam_metadata is None:
-        print(
-            "[bold red]Failed to diagnose the exam. "
-            "Exiting pipeline.[/bold red]"
-        )
-        return
+        msg = "Failed to diagnose the exam."
+        raise RuntimeError(msg)
 
-    print("[bold green]Starting exam processing pipeline...[/bold green]\n")
+    logger.info("Starting exam processing pipeline...")
 
-    print("[bold blue]Extracting content from PDFs...[/bold blue]\n")
-    exam_data = exam_extractor.extract_content(
-        exam_pdf_path=Path("data/prova.pdf"),
-        answer_key_pdf_path=Path("data/gabarito.pdf"),
-        images_output_dir=CONFIG.paths.extracted_images_dir,
+    logger.info("Extracting content from PDFs...")
+    exam_data = await asyncio.to_thread(
+        exam_extractor.extract_content,
+        exam_pdf_path=exam_pdf_path,
+        answer_key_pdf_path=answer_key_pdf_path,
+        images_output_dir=images_output_dir,
     )
 
-    print("[bold blue]Cleaning text...[/bold blue]\n")
+    logger.info("Cleaning text...")
     cleaned_exam_text = text_processor.clean_text(exam_data["text"])
 
-    print(
-        "[bold blue]Splitint exam into exam content "
-        "and answer key. [/bold blue]\n"
-    )
+    logger.info("Splitting exam into exam content and answer key...")
     exam_text, answer_key_text = question_processor.split_answer_key(
         cleaned_exam_text
     )
 
-    print("[bold blue]Splitting exam into question chunks...[/bold blue]\n")
+    logger.info("Splitting exam into question chunks...")
     question_chunks = question_processor.split_into_questions(exam_text)
 
-    print(
-        f"[bold green]Extracted {len(question_chunks)} "
-        "question chunks.[/bold green]\n"
-    )
+    logger.info("Extracted %d question chunks.", len(question_chunks))
 
-    print("[bold blue]Structuring questions using LLM... [/bold blue]\n")
+    logger.info("Structuring questions using LLM...")
     structured_questions = await question_processor.structure_questions(
         "structure_questions/v4.md",
         question_chunks,
@@ -78,7 +89,7 @@ async def run_pipeline() -> None:
         exam_metadata,
     )
 
-    print("[bold blue]Attaching images to questions... [/bold blue]\n")
+    logger.info("Attaching images to questions...")
     question_processor.attach_images_to_questions(
         structured_questions, exam_data["images_map"]
     )
@@ -88,18 +99,34 @@ async def run_pipeline() -> None:
         questions=structured_questions,
     )
 
-    print(f"[bold green]Writing output to {output_path}...[/bold green]\n")
-
-    await async_write_json(output_path, exam.model_dump())
+    if output_path is not None:
+        logger.info("Writing output to %s...", output_path)
+        await async_write_json(output_path, exam.model_dump())
 
     end = time.perf_counter()
 
-    print(f"Pipeline completed in {end - start:.2f} seconds.")
-    print(
-        f"[bold green]Successfully processed {len(structured_questions)} "
-        "questions.[/bold green]"
+    logger.info("Pipeline completed in %.2f seconds.", end - start)
+    logger.info(
+        "Successfully processed %d questions.",
+        len(structured_questions),
+    )
+
+    return exam
+
+
+async def run_pipeline_cli() -> None:
+    """CLI entry-point that uses the default hardcoded paths."""
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+    )
+    await run_pipeline(
+        exam_pdf_path=Path("data/prova.pdf"),
+        answer_key_pdf_path=Path("data/gabarito.pdf"),
+        images_output_dir=CONFIG.paths.extracted_images_dir,
+        output_path=CONFIG.paths.final_output_path,
     )
 
 
 if __name__ == "__main__":
-    asyncio.run(run_pipeline())
+    asyncio.run(run_pipeline_cli())
