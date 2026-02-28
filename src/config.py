@@ -90,6 +90,23 @@ class QuestionConfig:
 
 
 @dataclass
+class APIConfig:
+    """Configuration for the FastAPI application."""
+
+    secret_key: str = ""
+    allowed_origins: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        """Override with environment variables if set."""
+        self.secret_key = os.getenv("API_SECRET_KEY", self.secret_key)
+        origins = os.getenv("ALLOWED_ORIGINS", "")
+        if origins:
+            self.allowed_origins = [
+                o.strip() for o in origins.split(",") if o.strip()
+            ]
+
+
+@dataclass
 class AppConfig:
     """Main application configuration."""
 
@@ -97,6 +114,7 @@ class AppConfig:
     paths: PathConfig = field(default_factory=PathConfig)
     llm: LLMConfig = field(default_factory=LLMConfig)
     question: QuestionConfig = field(default_factory=QuestionConfig)
+    api: APIConfig = field(default_factory=APIConfig)
 
 
 # Global configuration instance
