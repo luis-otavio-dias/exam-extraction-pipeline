@@ -21,7 +21,7 @@ class ExamExtractor:
     def extract_content(
         self,
         exam_pdf_path: Path,
-        answer_key_pdf_path: Path,
+        answer_key_pdf_path: Path | None,
         images_output_dir: Path,
     ) -> dict[str, Any]:
         return {
@@ -140,7 +140,7 @@ class ExamExtractor:
     def extract_exam_text(
         self,
         exam_pdf_path: Path,
-        answer_key_pdf_path: Path,
+        answer_key_pdf_path: Path | None = None,
         exam_start_page: int | None = None,
         exam_end_page: int | None = None,
         answer_key_separator: str = "\n\n--- Answer Key ---\n\n",
@@ -161,7 +161,7 @@ class ExamExtractor:
             exam_pdf_path, start_page=exam_start_page, end_page=exam_end_page
         )
 
-        if answer_key_pdf_path.exists():
+        if answer_key_pdf_path is not None and answer_key_pdf_path.exists():
             answer_key_text = self.text_extractor.extract_text(
                 pdf_path=answer_key_pdf_path
             )
