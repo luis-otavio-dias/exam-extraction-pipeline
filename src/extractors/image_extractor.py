@@ -4,6 +4,7 @@ This module provides functionality to extract images from PDF files
 with configurable quality filters and question mapping.
 """
 
+import logging
 import re
 from io import BytesIO
 from pathlib import Path
@@ -12,6 +13,8 @@ from fitz import Document
 from PIL import Image
 
 from config import CONFIG, ImageFilterConfig
+
+logger = logging.getLogger(__name__)
 
 
 class PDFImageExtractor:
@@ -146,7 +149,7 @@ class PDFImageExtractor:
                 self.save_image(image_bytes, output_dir, img_filename)
                 return img_filename
 
-        except Exception as e:
-            print(f"Error processing xref {xref}: {e}")
+        except Exception:
+            logger.exception("Error processing xref %d", xref)
 
         return None

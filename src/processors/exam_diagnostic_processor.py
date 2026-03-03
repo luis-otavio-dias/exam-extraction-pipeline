@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from asyncio import Semaphore
 from pathlib import Path
 
@@ -14,6 +15,8 @@ from extractors.text_extractor import PDFTextExtractor
 from models.question import ExamProfile
 from prompts.loader import PromptLoader
 from utils.llm import load_google_generative_ai_model
+
+logger = logging.getLogger(__name__)
 
 _MIN_PAGES_FOR_MIDDLE_SAMPLE = 2
 
@@ -110,19 +113,26 @@ class ExamDiagnosticProcessor:
 
                     if attempt < self.max_retries:
                         delay = self.retry_base_delay * (2 ** (attempt - 1))
-                        print(
-                            f"[Attempt {attempt}/{self.max_retries}] "
-                            f"{error_type}: {e}. "
-                            f"Retrying in {delay:.1f}s..."
+                        logger.warning(
+                            "[Attempt %d/%d] %s: %s. Retrying in %.1fs...",
+                            attempt,
+                            self.max_retries,
+                            error_type,
+                            e,
+                            delay,
                         )
                         await asyncio.sleep(delay)
                     else:
-                        print(
-                            f"[Attempt {attempt}/{self.max_retries}] "
-                            f"{error_type}: {e}. "
-                            f"Giving up."
+                        logger.exception(
+                            "[Attempt %d/%d]: %s. Giving up.",
+                            attempt,
+                            self.max_retries,
+                            error_type,
                         )
                         if content:
-                            print(f"LLM Response Content: {content[:500]}...")
+                            logger.debug(
+                                "LLM Response Content: %s",
+                                content[:500],
+                            )
                         return None
         return None

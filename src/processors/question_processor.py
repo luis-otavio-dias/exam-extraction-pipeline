@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import re
 from asyncio import Semaphore
 
@@ -12,6 +13,8 @@ from models.question import ExamProfile, Question
 from prompts.loader import PromptLoader
 from utils.build_question_id import build_question_id, extract_question_number
 from utils.llm import load_google_generative_ai_model
+
+logger = logging.getLogger(__name__)
 
 
 class QuestionProcessor:
@@ -149,20 +152,27 @@ class QuestionProcessor:
 
                     if attempt < self.max_retries:
                         delay = self.retry_base_delay * (2 ** (attempt - 1))
-                        print(
-                            f"[Attempt {attempt}/{self.max_retries}] "
-                            f"{error_type}: {e}. "
-                            f"Retrying in {delay:.1f}s..."
+                        logger.warning(
+                            "[Attempt %d/%d] %s: %s. Retrying in %.1fs...",
+                            attempt,
+                            self.max_retries,
+                            error_type,
+                            e,
+                            delay,
                         )
                         await asyncio.sleep(delay)
                     else:
-                        print(
-                            f"[Attempt {attempt}/{self.max_retries}] "
-                            f"{error_type}: {e}. "
-                            f"Giving up."
+                        logger.exception(
+                            "[Attempt %d/%d]: %s. Giving up.",
+                            attempt,
+                            self.max_retries,
+                            error_type,
                         )
                         if content:
-                            print(f"LLM Response Content: {content[:500]}...")
+                            logger.debug(
+                                "LLM Response Content: %s",
+                                content[:500],
+                            )
                         return None
         return None
 

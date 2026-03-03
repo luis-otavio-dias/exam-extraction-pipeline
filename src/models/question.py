@@ -163,3 +163,45 @@ class Exam(BaseModel):
         default_factory=ExamProfile, description="Exam profile metadata"
     )
     questions: list[Question] = Field(..., description="List of questions")
+
+
+class ImagePayload(BaseModel):
+    """Base64-encoded image payload for API responses."""
+
+    filename: str = Field(..., description="Original image filename")
+    content_base64: str = Field(
+        ..., description="Base64-encoded image content"
+    )
+    mime_type: str = Field(
+        default="image/jpeg", description="MIME type of the image"
+    )
+
+
+class QuestionResponse(BaseModel):
+    """API response model for a question, with inline base64 images."""
+
+    question_id: str = Field(default="")
+    question: str
+    passage_text: str = Field(default="")
+    sources: list[str] = Field(default_factory=list, max_length=10)
+    image: bool = Field(default=False)
+    images: list[ImagePayload] = Field(default_factory=list)
+    statement: str
+    options: list[QuestionOption] = Field(default_factory=list)
+    correct_option: str = Field(..., pattern=r"^[A-E]$")
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class ExamResponse(BaseModel):
+    """API response model for a complete exam with base64 images."""
+
+    metadata: ExamProfile = Field(default_factory=ExamProfile)
+    questions: list[QuestionResponse] = Field(default_factory=list)
+
+
+class ProcessingResponse(BaseModel):
+    """Standard API response envelope."""
+
+    status: str
+    data: Exam | ExamResponse | None = None
+    error_message: str | None = None
