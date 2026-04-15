@@ -1,0 +1,29 @@
+services:
+  exam-extraction-pipeline-api:
+    pull_policy: never
+    image: exam-extraction-pipeline-api
+    container_name: exam-extraction-pipeline-api
+    hostname: exam-extraction-pipeline-api
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./src
+          target: /app/src
+
+          ignore:
+            - .venv/
+            - __pycache__/
+
+        - action: rebuild
+          path: ./uv.lock
