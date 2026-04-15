@@ -79,53 +79,75 @@ Na raiz do projeto, você encontrará o arquivo [`expected_output.json`](expecte
 
 ## Instalação
 
+### Pré-requisitos
+
+- Docker
+- Docker Compose (plugin `docker compose`)
+
+### Execução com Docker Compose (recomendado)
+
 1.  **Clone o repositório**:
 
     ```bash
     git clone https://github.com/luis-otavio-dias/exam-extraction-pipeline.git
-    cd data-extraction-agent
+    cd exam-extraction-pipeline
     ```
 
-2.  **Dependências**:
-    - **Com UV**  
-      O projeto usa uv para gerenciar dependências. Se você utiliza uv, execute no diretório do projeto:
-
-      ```bash
-      uv sync
-      ```
-
-    - **Alternativa sem UV**
-      - Crie e ative um ambiente virtual:
-
-        ```bash
-        python -m venv .venv
-        source .venv/bin/activate
-        # No Windows: .venv\Scripts\activate
-        ```
-
-      - Instale as dependências:
-
-        ```bash
-        pip install -e .
-        ```
-
-3.  **Configure as variáveis de ambiente**:
-    Crie um arquivo `.env` copiando o `.env-example` e adicione sua chave de API:
+2.  **Configure as variáveis de ambiente**:
 
     ```bash
-    cp .env-example .env
+    cp .env.example .env
     ```
 
-    Em seguida, edite o arquivo `.env`:
+    Em seguida, edite o arquivo `.env` e preencha pelo menos:
 
     ```ini
-    AI_MODEL_API_KEY="sua_chave_de_api_aqui"
+    API_SECRET_KEY="sua_chave_secreta"
+    GOOGLE_API_KEY="sua_chave_google"
     ```
+
+3.  **Suba a API com Docker Compose**:
+
+    ```bash
+    docker compose up
+    ```
+
+    Na primeira execução (ou após mudanças de dependências), use:
+
+    ```bash
+    docker compose up --build
+    ```
+
+4.  **Valide se a API subiu corretamente**:
+
+    ```bash
+    curl http://localhost:8001/health
+    ```
+
+    Resposta esperada:
+
+    ```json
+    { "status": "ok", "service": "exam-extraction-api" }
+    ```
+
+### Execução local com UV (alternativa)
+
+Se você preferir rodar sem Docker:
+
+```bash
+uv sync
+uv run --env-file=".env" src/pipeline.py
+```
 
 ## Execução do Pipeline
 
+Com Docker Compose, a API fica disponível em `http://localhost:8001`.
+O endpoint principal de processamento é `POST /api/v1/process`.
+
+Para interromper os containers:
+
 ```bash
-  uv run --env-file=".env" src/pipeline.py
+docker compose down
 ```
 
 Durante a execução, o pipeline seguirá os seguintes passos:
