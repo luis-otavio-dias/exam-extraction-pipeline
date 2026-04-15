@@ -1,22 +1,60 @@
-[
-  {
-    "question": "QUESTÃO 01",
-    "passage_text": "",
-    "sources": ["http://example.com"],
-    "image": true,
-    "images": ["QUESTÃO 01_img123.jpeg"],
-    "statement": "Qual é a resposta correta?",
-    "options": [
-      { "label": "A", "text": "Opção A" },
-      { "label": "B", "text": "Opção B" },
-      { "label": "C", "text": "Opção C" },
-      { "label": "D", "text": "Opção D" },
-      { "label": "E", "text": "Opção E" }
-    ],
-    "correct_option": "C",
+{
+  "status": "success",
+  "data": {
     "metadata": {
-      "area": "Área de Conhecimento",
-      "topic": "Tópico Específico"
-    }
-  }
-]
+      "exam_name_base": "Exame Nacional do Ensino Médio",
+      "exam_name_sigle": "ENEM",
+      "exam_variant": "2024 - 1º Dia - Caderno 1 - Azul",
+      "exam_year": 2024,
+      "exam_style": "enem_like",
+      "exam_type": "mixed",
+      "answer_key_location": "separate_document",
+      "total_questions": 90
+    },
+    "questions": [
+      {
+        "question_id": "enem_2024_d1_azul_q01_da63a633",
+        "question": "QUESTÃO 01",
+        "passage_text": "",
+        "sources": ["http://thumbpress.com", "28 out. 2013"],
+        "image": true,
+        "images": [
+          {
+            "filename": "QUESTÃO 01_img3.jpeg",
+            "content_base64": "/9j/7gAOQWRvYmUAZAAAAAAA/9...",
+            "mime_type": "image/jpeg"
+          }
+        ],
+        "statement": "A relação entre as citações atribuídas ao físico Albert Einstein\ne ao cantor e compositor Bob Marley reside na crença de que\né necessário",
+        "options": [
+          {
+            "label": "A",
+            "text": "dar oportunidade a pessoas que parecem necessitadas."
+          },
+          {
+            "label": "B",
+            "text": "identificar contextos que podem representar perigo."
+          },
+          {
+            "label": "C",
+            "text": "tirar proveito de situações que podem ser adversas."
+          },
+          {
+            "label": "D",
+            "text": "evitar dificuldades que parecem ser intransponíveis."
+          },
+          {
+            "label": "E",
+            "text": "contestar circunstâncias que parecem ser harmônicas."
+          }
+        ],
+        "correct_option": "C",
+        "metadata": {
+          "area": "Linguagens",
+          "topic": "Interpretação de Texto"
+        }
+      }
+    ]
+  },
+  "error_message": null
+}

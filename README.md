@@ -140,27 +140,43 @@ Durante a execução, o pipeline seguirá os seguintes passos:
 ## Exemplo de Saída
 
 ```json
-[
-  {
-    "question": "Questão 5",
-    "image": false,
-    "images": [],
-    "passage_text": "A França é um país localizado na Europa Ocidental...",
-    "sources": [
-      "https://pt.wikipedia.org/wiki/Fran%C3%A7a"
-    ],
-    "statement": "Identifique a capital política e cultural mencionada no texto.",
-    "options": {
-      "A": "Londres",
-      "B": "Berlim",
-      "C": "Paris",
-      "D": "Madri",
-      "E": "Roma"
+{
+  "status": "success",
+  "data": {
+    "metadata": {
+      "exam_name_base": "Exame Exemplo 2024",
+      "exam_name_sigle": "EXEMPLO2024",
+      "exam_variant": "versão A",
+      "exam_year": 2024,
+      "exam_style": "vestibular",
+      "exam_type": "mixed",
+      "answer_key_location": "separate_document",
+      "total_questions": 45
     },
-    "correct_option": "C"
-  },
-  ...
-]
+    "questions": [
+      ...,
+      {
+        "question": "Questão 5",
+        "image": false,
+        "images": [],
+        "passage_text": "A França é um país localizado na Europa Ocidental...",
+        "sources": [
+          "https://pt.wikipedia.org/wiki/Fran%C3%A7a"
+        ],
+        "statement": "Identifique a capital política e cultural mencionada no texto.",
+        "options": {
+          "A": "Londres",
+          "B": "Berlim",
+          "C": "Paris",
+          "D": "Madri",
+          "E": "Roma"
+        },
+        "correct_option": "C"
+      },
+      ...
+    ]
+  }
+}
 ```
 
 ## Racional por trás da arquitetura do pipeline
