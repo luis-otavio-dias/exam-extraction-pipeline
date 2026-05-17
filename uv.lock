@@ -261,6 +261,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiolimiter" },
+    { name = "certifi" },
     { name = "fastapi", extra = ["standard"] },
     { name = "json-repair" },
     { name = "langchain" },
@@ -283,6 +284,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "aiolimiter", specifier = ">=1.1.0" },
+    { name = "certifi", specifier = ">=2025.11.12" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.133.0" },
     { name = "json-repair", specifier = ">=0.53.0" },
     { name = "langchain", specifier = ">=1.0.2" },
