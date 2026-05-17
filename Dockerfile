@@ -29,11 +29,17 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 FROM debian:trixie-slim AS development
 
-ENV PYTHONUNBUFFERED=1 
+ENV PYTHONUNBUFFERED=1
 
 
 RUN groupadd --gid 1000 python \
   && useradd --uid 1000 --gid python --shell /bin/bash --create-home python ;
+
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/* ;
 
 
 COPY --from=builder --chown=python:python /python /python
@@ -45,4 +51,9 @@ USER python
 ENTRYPOINT []
 WORKDIR /app
 
-CMD uvicorn --host 0.0.0.0 --port 8001 src.main:app
+ENV SSL_CERT_FILE=/app/.venv/lib/python3.14/site-packages/certifi/cacert.pem
+ENV REQUESTS_CA_BUNDLE=/app/.venv/lib/python3.14/site-packages/certifi/cacert.pem
+ENV HTTpx_CA_BUNDLE=/app/.venv/lib/python3.14/site-packages/certifi/cacert.pem
+
+
+CMD ["uvicorn", "--host", "0.0.0.0", "--port", "8001", "main:app", "--reload"]

@@ -13,6 +13,8 @@ services:
       - "8001:8001"
     volumes:
       - ./data:/app/data
+      - ./src:/app/src
+      - ./main.py:/app/main.py
     env_file:
       - .env
     develop:
