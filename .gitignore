@@ -4,6 +4,7 @@
 
 data/*
 .vscode/
+.zed/
 .egg-info
 *_images/
 *.jpg
