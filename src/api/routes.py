@@ -10,6 +10,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 from api.dependencies import verify_api_key
+from config import CONFIG
 from models.question import ExamResponse, ProcessingResponse
 from pipeline import run_pipeline
 from utils.image_encoding import build_exam_response
@@ -97,3 +98,25 @@ async def process_exam(
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
         logger.info("Cleaned up temp dir %s", temp_dir)
+
+
+@router.get(
+    "/get-pipeline-settings",
+    summary="Return the settings (LLM model, temparature,  rpm, ...",
+)
+async def pipeline_settings() -> dict[str, dict]:
+    return {
+        "api": {
+            "allowed_origins": CONFIG.api.allowed_origins,
+        },
+        "llm": {
+            "model_name": CONFIG.llm.model_name,
+            "temperature": CONFIG.llm.temperature,
+            "request": {
+                "max_concurrent_requests": CONFIG.llm.max_concurrent_requests,
+                "requests_per_minute": CONFIG.llm.requests_per_minute,
+                "max_retries": CONFIG.llm.max_retries,
+                "retry_base_delay": CONFIG.llm.retry_base_delay,
+            },
+        },
+    }
