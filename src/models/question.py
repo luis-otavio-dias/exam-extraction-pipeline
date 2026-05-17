@@ -154,7 +154,29 @@ class Exam(BaseModel):
                     "answer_key_location": "separate_document",
                     "total_questions": 95,
                 },
-                "questions": [],
+                "questions": [
+                    {
+                        "question_id": "enem_2024_d1_azul_q01_ab13c122",
+                        "question": "QUESTÃO 01",
+                        "passage_text": "",
+                        "sources": ["http://example.com"],
+                        "image": True,
+                        "images": ["QUESTÃO 01_img123.jpeg"],
+                        "statement": "Qual é a resposta correta?",
+                        "options": [
+                            {"label": "A", "text": "Opção A"},
+                            {"label": "B", "text": "Opção B"},
+                            {"label": "C", "text": "Opção C"},
+                            {"label": "D", "text": "Opção D"},
+                            {"label": "E", "text": "Opção E"},
+                        ],
+                        "correct_option": "C",
+                        "metadata": {
+                            "area": "Ciências Humanas",
+                            "topic": "História",
+                        },
+                    }
+                ],
             }
         }
     )
