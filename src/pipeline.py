@@ -12,6 +12,7 @@ from processors import (
     TextProcessor,
 )
 from utils.file_operations import async_write_json
+from utils.llm import load_nvidia_model
 
 logger = logging.getLogger(__name__)
 
@@ -38,11 +39,15 @@ async def run_pipeline(
         RuntimeError: If the exam diagnostic fails.
     """
     start = time.perf_counter()
+    llm = load_nvidia_model(
+        model_name=CONFIG.llm.model_name, temperature=CONFIG.llm.temperature
+    )
     exam_extractor = ExamExtractor()
     text_processor = TextProcessor()
-    exam_diagnostic_processor = ExamDiagnosticProcessor()
+    exam_diagnostic_processor = ExamDiagnosticProcessor(llm=llm)
 
     question_processor = QuestionProcessor(
+        llm=llm,
         requests_per_minute=50,
         max_concurrent_requests=30,
     )
